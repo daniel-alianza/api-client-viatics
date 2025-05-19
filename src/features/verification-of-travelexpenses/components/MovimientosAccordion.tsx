@@ -1,23 +1,37 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { Movimiento } from '../../../services/movimientosService';
 import React from 'react';
 import ComprobacionModal from './ComprobacionModal';
+import { motion } from 'framer-motion';
 
 interface MovimientosAccordionProps {
   movimientos: Movimiento[];
   isOpen: boolean;
   onToggle: () => void;
+  noSolicitud: string;
+  sociedad: string;
 }
 
 export default function MovimientosAccordion({
   movimientos,
   isOpen,
   onToggle,
+  noSolicitud,
+  sociedad,
 }: MovimientosAccordionProps) {
   const [modalOpenIndex, setModalOpenIndex] = useState<number | null>(null);
 
-  const handleComprobacion = (file: File, tipo: string) => {
+  const handleComprobacion = (
+    _file: File,
+    _tipo: string,
+    _data?: {
+      responsable: string;
+      motivo: string;
+      descripcion: string;
+      importe: string;
+    },
+  ) => {
     // Aquí puedes manejar el archivo y el tipo
     // Por ahora solo cerramos el modal
     setModalOpenIndex(null);
@@ -27,7 +41,7 @@ export default function MovimientosAccordion({
     <div className='mt-4'>
       <button
         onClick={onToggle}
-        className='w-full flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors'
+        className='w-full flex items-center justify-between p-4 bg-[#02082C]/5 rounded-lg hover:bg-[#02082C]/10 transition-colors'
       >
         <span className='font-medium text-[#02082C]'>Movimientos</span>
         {isOpen ? (
@@ -41,7 +55,7 @@ export default function MovimientosAccordion({
         <div className='mt-2 bg-white rounded-lg shadow-lg overflow-hidden'>
           <div className='overflow-x-auto'>
             <table className='min-w-full divide-y divide-gray-200'>
-              <thead className='bg-[#287492] text-white'>
+              <thead className='bg-[#02082C] text-white'>
                 <tr>
                   <th className='px-6 py-3 text-left text-xs font-bold uppercase tracking-wider'>
                     Movimiento
@@ -61,42 +75,60 @@ export default function MovimientosAccordion({
                   <th className='px-6 py-3 text-left text-xs font-bold uppercase tracking-wider'></th>
                 </tr>
               </thead>
-              <tbody className='bg-white divide-y divide-gray-200'>
+              <tbody>
                 {movimientos.map((movimiento, idx) => (
                   <tr
                     key={movimiento.Sequence}
                     className='hover:bg-[#F34602]/5'
                   >
-                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#287492] font-bold'>
+                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#02082C] font-bold'>
                       {movimiento.Sequence}
                     </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#287492]'>
+                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#02082C]/80'>
                       {new Date(movimiento.DueDate).toISOString().split('T')[0]}
                     </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#287492]'>
+                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#02082C]/80'>
                       {movimiento.Ref}
                     </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#287492]'>
+                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#02082C]/80'>
                       {movimiento.Memo}
                     </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#287492] font-bold'>
+                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#F34602] font-medium'>
                       {Number(movimiento.DebAmount).toLocaleString('es-MX', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap text-sm'>
-                      <button
-                        className='px-3 py-1 bg-[#287492] text-white rounded hover:bg-[#1d4e6c] transition'
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className='group relative px-4 py-2 bg-[#02082C] text-white rounded-lg overflow-hidden transition-all duration-300 ease-in-out hover:bg-[#F34602] hover:shadow-lg cursor-pointer'
                         onClick={() => setModalOpenIndex(idx)}
                         type='button'
                       >
-                        Agregar comprobación
-                      </button>
+                        <span className='relative z-10 flex items-center gap-2'>
+                          <FileText className='w-4 h-4 transition-transform duration-300 group-hover:rotate-12' />
+                          Agregar comprobación
+                        </span>
+                        <motion.div
+                          className='absolute inset-0 bg-[#F34602]'
+                          initial={{ x: '-100%' }}
+                          whileHover={{ x: 0 }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      </motion.button>
                       <ComprobacionModal
                         open={modalOpenIndex === idx}
                         onClose={() => setModalOpenIndex(null)}
                         onSubmit={handleComprobacion}
+                        movimiento={{
+                          ...movimiento,
+                          Sequence: movimiento.Sequence.toString(),
+                          DueDate: new Date(movimiento.DueDate).toISOString(),
+                        }}
+                        noSolicitud={noSolicitud}
+                        sociedad={sociedad}
                       />
                     </td>
                   </tr>

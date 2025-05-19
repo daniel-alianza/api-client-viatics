@@ -58,6 +58,8 @@ interface TravelExpense {
   faltantes: number | string;
   comprobados: number | string;
   diasRestantes: number | string;
+  noSolicitud: string;
+  sociedad: string;
 }
 
 export default function MainContent() {
@@ -166,6 +168,8 @@ export default function MainContent() {
                   fechaSalida: formatDate(viatico.FechaSalida),
                   fechaRegreso: formatDate(viatico.FechaRegreso),
                   ...extractosData,
+                  noSolicitud: viatico.IdViaticos.toString(),
+                  sociedad: viatico.Sociedad,
                 };
               } catch (error) {
                 console.error(
@@ -187,6 +191,8 @@ export default function MainContent() {
                   faltantes: '-',
                   comprobados: '-',
                   diasRestantes: '-',
+                  noSolicitud: viatico.IdViaticos.toString(),
+                  sociedad: viatico.Sociedad,
                 };
               }
             }),
@@ -420,6 +426,8 @@ export default function MainContent() {
                             onToggle={() =>
                               setIsAccordionOpen(!isAccordionOpen)
                             }
+                            noSolicitud={expense.noSolicitud}
+                            sociedad={expense.sociedad}
                           />
                         )}
                       </td>
