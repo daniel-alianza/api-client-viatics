@@ -14,6 +14,8 @@ export interface CardAssignment {
   totalAmount?: number;
   departureDate?: string;
   returnDate?: string;
+  disbursementDate?: string; // Fecha de dispersión
+  statusChange?: '0' | '1' | '2' | '3'; // 0=Sin cambio, 1=Activo, 2=Inactivo, 3=Cancelado
 }
 
 export interface ExportConfig {

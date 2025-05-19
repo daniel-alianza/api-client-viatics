@@ -88,9 +88,10 @@ export const ExpenseModal = forwardRef<HTMLDivElement, ExpenseModalProps>(
             initial='hidden'
             animate='visible'
             exit='exit'
+            as='div'
           >
             {/* Applicant Information */}
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} as='div'>
               <h3 className='mb-2 text-lg font-semibold text-[#02082C]'>
                 Applicant Information
               </h3>
@@ -98,6 +99,7 @@ export const ExpenseModal = forwardRef<HTMLDivElement, ExpenseModalProps>(
                 className='rounded-md bg-[#02082C]/5 p-4 hover:shadow-md transition-shadow duration-300'
                 whileHover={{ scale: 1.01 }}
                 transition={{ duration: 0.2 }}
+                as='div'
               >
                 <div className='grid grid-cols-2 gap-3'>
                   <div>
@@ -121,7 +123,7 @@ export const ExpenseModal = forwardRef<HTMLDivElement, ExpenseModalProps>(
             </motion.div>
 
             {/* Trip Information */}
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} as='div'>
               <h3 className='mb-2 text-lg font-semibold text-[#02082C]'>
                 Trip Information
               </h3>
@@ -129,6 +131,7 @@ export const ExpenseModal = forwardRef<HTMLDivElement, ExpenseModalProps>(
                 className='rounded-md bg-[#02082C]/5 p-4 hover:shadow-md transition-shadow duration-300'
                 whileHover={{ scale: 1.01 }}
                 transition={{ duration: 0.2 }}
+                as='div'
               >
                 <div className='grid grid-cols-3 gap-3'>
                   <div>
@@ -152,7 +155,7 @@ export const ExpenseModal = forwardRef<HTMLDivElement, ExpenseModalProps>(
             </motion.div>
 
             {/* Financial Information */}
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} as='div'>
               <h3 className='mb-2 text-lg font-semibold text-[#02082C]'>
                 Financial Information
               </h3>
@@ -160,6 +163,7 @@ export const ExpenseModal = forwardRef<HTMLDivElement, ExpenseModalProps>(
                 className='rounded-md bg-[#02082C]/5 p-4 hover:shadow-md transition-shadow duration-300'
                 whileHover={{ scale: 1.01 }}
                 transition={{ duration: 0.2 }}
+                as='div'
               >
                 {expense.details && expense.details.length > 0 ? (
                   <>
@@ -204,7 +208,7 @@ export const ExpenseModal = forwardRef<HTMLDivElement, ExpenseModalProps>(
             </motion.div>
 
             {/* Trip Purpose */}
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} as='div'>
               <h3 className='mb-2 text-lg font-semibold text-[#02082C]'>
                 Trip Purpose
               </h3>
@@ -212,6 +216,7 @@ export const ExpenseModal = forwardRef<HTMLDivElement, ExpenseModalProps>(
                 className='rounded-md bg-[#02082C]/5 p-4 hover:shadow-md transition-shadow duration-300'
                 whileHover={{ scale: 1.01 }}
                 transition={{ duration: 0.2 }}
+                as='div'
               >
                 <div className='mb-3'>
                   <p className='text-sm text-gray-500'>Reason for Trip</p>

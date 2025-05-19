@@ -1,11 +1,10 @@
 import { useState, useCallback } from 'react';
+import { format } from 'date-fns';
 import type { CardAssignment } from '../interfaces/card-assignment';
 import type {
   CardReassignment,
   ReassignmentControlRow,
-  ReassignmentFileName,
 } from '../interfaces/card-reassignment';
-import { format } from 'date-fns';
 import { useDailyConsecutive } from './use-daily-consecutive';
 import { updateCardAndExpense } from '@/services/accountingService';
 
@@ -13,6 +12,16 @@ export interface ReassignmentDialogData {
   groupNumber: string;
   clientNumber: string;
 }
+
+export type StatusChange = '0' | '1' | '2' | '3' | 'PENDING';
+
+/**
+ * Limita una cadena a un número máximo de caracteres
+ */
+const limitString = (str: string | undefined, maxLength: number): string => {
+  if (!str) return '';
+  return str.slice(0, maxLength);
+};
 
 export function useCardReassignment() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -26,50 +35,54 @@ export function useCardReassignment() {
   const generateFileName = useCallback(
     (groupNumber: string): string => {
       const today = new Date();
-      const fileNameData: ReassignmentFileName = {
-        type: 'R',
-        month: format(today, 'MM'),
-        day: format(today, 'dd'),
-        consecutive,
-        groupNumber: groupNumber.padStart(9, '0'),
-        extension: '.csv',
-      };
-
-      return `${fileNameData.type}${fileNameData.month}${fileNameData.day}${fileNameData.consecutive}${fileNameData.groupNumber}${fileNameData.extension}`;
+      const mmdd = format(today, 'MMdd');
+      const consecutiveNumber = consecutive.padStart(2, '0');
+      const paddedGroupNumber = groupNumber.padStart(9, '0');
+      return `R${mmdd}${consecutiveNumber}${paddedGroupNumber}.CSV`;
     },
     [consecutive],
   );
-
-  const formatDate = useCallback((date: string | undefined): string => {
-    if (!date) return '';
-    try {
-      return format(new Date(date), 'yyyyMMdd');
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return '';
-    }
-  }, []);
 
   const prepareReassignmentData = useCallback(
     (
       expense: CardAssignment,
       sign: '+' | '-',
-      adjustAmount: number,
+      amount: number,
+      statusChange: StatusChange = 'PENDING',
     ): CardReassignment => {
-      const cardNumber = expense.cardNumber || '';
+      // Asegurarnos de que las fechas estén en el formato correcto (YYYYMMDD)
+      const formatDateToYYYYMMDD = (date: string | undefined): string => {
+        if (!date) return '';
+        try {
+          return format(new Date(date), 'yyyyMMdd');
+        } catch (error) {
+          console.error('Error al formatear fecha:', error);
+          return '';
+        }
+      };
+
+      // Usar la fecha de dispersión como fecha de inicio, si no existe dejar vacío
+      const startDate = expense.disbursementDate
+        ? formatDateToYYYYMMDD(expense.disbursementDate)
+        : '';
+
+      // Usar la fecha de regreso como fecha final
+      const endDate = expense.returnDate
+        ? formatDateToYYYYMMDD(expense.returnDate)
+        : '';
 
       return {
-        cardNumber: cardNumber.replace(/[^\d]/g, ''),
-        description: (expense.description || expense.travelReason || '')
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, ''),
-        sign: sign,
-        amount: adjustAmount,
-        startDate: formatDate(new Date().toISOString()),
-        endDate: formatDate(expense.endDate || expense.returnDate),
+        cardNumber: expense.cardNumber || '',
+        description:
+          expense.description || expense.travelReason || 'Sin descripción',
+        sign,
+        amount,
+        startDate,
+        endDate,
+        statusChange,
       };
     },
-    [formatDate],
+    [],
   );
 
   const generateControlRow = useCallback(
@@ -103,22 +116,22 @@ export function useCardReassignment() {
 
       const rows = data.map(row =>
         [
-          row.cardNumber.replace(/\s/g, ''),
-          row.description.normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
-          row.sign,
-          row.amount,
-          row.startDate,
-          row.endDate,
-          '',
+          `="${(row.cardNumber || '').replace(/\s/g, '')}"`,
+          limitString(row.description, 40),
+          row.sign || '+',
+          (row.amount || 0).toFixed(2).padStart(11, '0'),
+          row.startDate || '',
+          row.endDate || '',
+          row.statusChange === '0' ? '' : row.statusChange || '',
         ].join(','),
       );
 
       const controlRowStr = [
-        controlRow.clientNumber,
-        controlRow.groupNumber,
+        controlRow.clientNumber.padStart(10, '0'),
+        controlRow.groupNumber.padStart(9, '0'),
         controlRow.sendDate,
-        controlRow.totalAmount,
-        controlRow.recordCount,
+        controlRow.totalAmount.toFixed(2),
+        controlRow.recordCount.toString(),
         '',
         '',
       ].join(',');
@@ -142,6 +155,7 @@ export function useCardReassignment() {
             expense,
             expense.sign as '+' | '-',
             expense.amountToAdjust,
+            expense.statusChange as StatusChange,
           ),
         );
 

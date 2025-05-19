@@ -24,7 +24,7 @@ import {
 } from '../context/SolicitudContext';
 import { useRequestErrorModal } from '@/features/request/hooks/useRequestErrorModal';
 import { RequestErrorModal } from '@/features/request/components/RequestErrorModal';
-
+import { ArrowLeft } from 'lucide-react';
 const TravelExpenseFormContent = () => {
   const navigate = useNavigate();
   const { userRequestData } = useSolicitudContext();
@@ -39,7 +39,6 @@ const TravelExpenseFormContent = () => {
     setTravelReason,
     travelObjectives,
     setTravelObjectives,
-    expenses,
     updateExpense,
     totalExpenses,
     getFormData,
@@ -158,10 +157,10 @@ const TravelExpenseFormContent = () => {
       return false;
     }
 
-    if (distributionDate < departureDate) {
+    if (!distributionDate || isNaN(distributionDate.getTime())) {
       showErrorModal(
         'Error de Validación',
-        'La fecha de distribución debe ser posterior o igual a la fecha de salida',
+        'Por favor, ingrese una fecha de distribución válida',
       );
       return false;
     }
@@ -327,29 +326,26 @@ const TravelExpenseFormContent = () => {
         animate='visible'
         variants={fadeIn}
         transition={{ duration: 0.5 }}
+        as='div'
       >
-        <div className='text-center mb-8'>
-          <motion.h1
-            className='text-3xl md:text-4xl font-bold mb-2'
-            style={{ color: '#02082C' }}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.7 }}
-          >
-            Solicitud de Viáticos
-          </motion.h1>
-          <motion.p
-            className='text-slate-600 max-w-2xl mx-auto'
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.7 }}
-          >
-            Completa todos los campos requeridos para tu viaje. Asegúrate de que
-            la información sea precisa y completa para evitar retrasos en el
-            proceso de aprobación.
-          </motion.p>
-        </div>
-
+        <header className='relative z-10 px-8 py-6 flex justify-between items-center bg-white shadow-sm'>
+          <div className='flex items-center'>
+            <div
+              className='relative w-12 h-12 cursor-pointer group'
+              onClick={() => navigate('/dashboard')}
+            >
+              <div className='absolute inset-0 flex items-center justify-center'>
+                <ArrowLeft
+                  className='h-8 w-8 text-[#02082C] transform transition-all duration-300 group-hover:scale-110 group-hover:-translate-x-1'
+                  strokeWidth={2}
+                />
+              </div>
+            </div>
+            <h1 className='ml-3 text-2xl font-bold text-[#02082C]'>
+              Portal Grupo FG{' '}
+            </h1>
+          </div>
+        </header>
         <Card className='w-full max-w-7xl mx-auto shadow-xl border-0 overflow-hidden bg-white/95 backdrop-blur-sm'>
           <div
             className='h-2 w-full'
@@ -405,6 +401,7 @@ const TravelExpenseFormContent = () => {
                 className='w-full'
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                as='div'
               >
                 <Button
                   type='submit'

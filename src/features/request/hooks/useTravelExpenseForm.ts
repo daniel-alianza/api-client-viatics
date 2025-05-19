@@ -98,7 +98,10 @@ export function useTravelExpenseForm() {
       travelReason: travelReason.trim(),
       travelObjectives: (travelObjectives || '').trim(),
       expenses: Object.fromEntries(
-        Object.entries(expenses).map(([key, value]) => [key, Number(value) || 0])
+        Object.entries(expenses).map(([key, value]) => [
+          key,
+          Number(value) || 0,
+        ]),
       ),
     };
   };

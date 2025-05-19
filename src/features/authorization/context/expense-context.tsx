@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import type { Expense } from '@/features/authorization/interfaces/expense';
-import { mockExpenses } from '@/features/authorization//data/mock-expenses';
+import { mockExpenses } from '@/features/authorization/data/mock-expenses';
 
 interface ExpenseContextType {
   expenses: Expense[];

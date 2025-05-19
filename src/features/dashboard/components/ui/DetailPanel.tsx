@@ -48,7 +48,7 @@ export const DetailPanel = ({
               opacity: 0,
               transition: { duration: 0.25 },
             }}
-            onClick={e => e.stopPropagation()}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             <div
               className='h-2 w-full'

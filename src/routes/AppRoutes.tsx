@@ -6,6 +6,9 @@ import RequestPage from '../features/request/pages/page';
 import AuthorizationPage from '../features/authorization/pages/page';
 import CollaboratorsWCardPage from '../features/collaborators-w-card/pages/page';
 import AccountingAuthorizationPage from '../features/accounting-authorization/pages';
+import VerificationOfTravelPage from '../features/verification-of-travelexpenses/pages/page';
+import VerificationOfTravelLayout from '../features/verification-of-travelexpenses/components/layout';
+import { ExpenseVerificationPage } from '../features/TravelExpense-Checks/pages/expense-verification-page';
 
 export const AppRoutes = () => {
   return (
@@ -23,6 +26,18 @@ export const AppRoutes = () => {
       <Route
         path='/accounting-authorization/page'
         element={<AccountingAuthorizationPage />}
+      />
+      <Route
+        path='/verification-of-travel/page'
+        element={<VerificationOfTravelPage />}
+      />
+      <Route
+        path='/verification-of-travel/detail/:id'
+        element={<VerificationOfTravelLayout />}
+      />
+      <Route
+        path='/expense-verification/page'
+        element={<ExpenseVerificationPage />}
       />
     </Routes>
   );

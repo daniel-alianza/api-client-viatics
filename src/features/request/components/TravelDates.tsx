@@ -7,10 +7,9 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
-import { CalendarIcon } from 'lucide-react';
-import { format, isBefore, isSameDay, isAfter } from 'date-fns';
+import { CalendarIcon, AlertCircle } from 'lucide-react';
+import { format, isBefore } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useRequestErrorModal } from '@/features/request/hooks/useRequestErrorModal';
 
@@ -98,28 +97,13 @@ const TravelDates = forwardRef<HTMLDivElement, TravelDatesProps>(
         return;
       }
 
-      const departure = departureDate ? new Date(departureDate) : null;
-
-      if (departure) {
-        if (isSameDay(date, departure) || !isAfter(date, departure)) {
-          setDistributionDate(date);
-          setOpenDistribution(false);
-        }
-      } else {
-        setDistributionDate(date);
-        setOpenDistribution(false);
-      }
+      setDistributionDate(date);
+      setOpenDistribution(false);
     };
 
     const isDistributionDateValid = () => {
       if (!departureDate || !distributionDate) return true;
-
-      const departure = new Date(departureDate);
-      const distribution = new Date(distributionDate);
-
-      return (
-        isSameDay(distribution, departure) || !isAfter(distribution, departure)
-      );
+      return true;
     };
 
     return (
@@ -222,14 +206,7 @@ const TravelDates = forwardRef<HTMLDivElement, TravelDatesProps>(
                   onSelect={handleDistributionDateChange}
                   initialFocus
                   className='rounded-md'
-                  disabled={date => {
-                    if (disabled) return true;
-                    if (!departureDate) return false;
-                    const departure = new Date(departureDate);
-                    return (
-                      isAfter(date, departure) && !isSameDay(date, departure)
-                    );
-                  }}
+                  disabled={disabled}
                 />
               </PopoverContent>
             </Popover>
@@ -237,8 +214,7 @@ const TravelDates = forwardRef<HTMLDivElement, TravelDatesProps>(
               <Alert variant='destructive' className='mt-2'>
                 <AlertCircle className='h-4 w-4' />
                 <AlertDescription>
-                  La fecha de dispersión debe ser el mismo día o un día anterior
-                  a la fecha de salida
+                  Por favor seleccione una fecha de distribución válida
                 </AlertDescription>
               </Alert>
             )}

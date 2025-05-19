@@ -152,8 +152,9 @@ export async function downloadAssignmentsCSV(
     });
 
     // Crear la fila de control
+    const cleanClientNumber = clientNumber.replace(/[^0-9]/g, '');
     const controlRow = [
-      clientNumber.padStart(10, '0'), // Número de cliente (10 dígitos)
+      `="${cleanClientNumber}"`, // Número de cliente exactamente como lo escribió el usuario
       fileNumber, // Número de archivo
       fileDate, // Fecha de envío
       assignments.length.toString(), // Cantidad de registros

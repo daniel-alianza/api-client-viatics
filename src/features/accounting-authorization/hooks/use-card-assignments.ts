@@ -9,28 +9,22 @@ import { getUserCard } from '@/services/accountingService';
 export function useCardAssignments(approvedExpenses: CardAssignment[]) {
   const [editingAmounts, setEditingAmounts] = useState<{
     [key: number]: number;
-  }>(() => {
-    // Inicializar los montos con 0
-    const initialAmounts: { [key: number]: number } = {};
-    approvedExpenses.forEach(expense => {
-      initialAmounts[expense.id] = 0;
-    });
-    return initialAmounts;
-  });
-
-  const [editingSigns, setEditingSigns] = useState<{ [key: number]: string }>(
-    () => {
-      // Inicializar los signos con '+'
-      const initialSigns: { [key: number]: string } = {};
-      approvedExpenses.forEach(expense => {
-        initialSigns[expense.id] = '+';
-      });
-      return initialSigns;
-    },
-  );
-
-  const [cardNumbers, setCardNumbers] = useState<CardNumberCache>({});
-  const [cardLimits, setCardLimits] = useState<{ [key: number]: number }>({});
+  }>({});
+  const [editingSigns, setEditingSigns] = useState<{
+    [key: number]: string;
+  }>({});
+  const [editingStatus, setEditingStatus] = useState<{
+    [key: number]: '1' | '2' | '3' | '';
+  }>({});
+  const [cardNumbers, setCardNumbers] = useState<{
+    [key: number]: string;
+  }>({});
+  const [cardLimits, setCardLimits] = useState<{
+    [key: number]: number;
+  }>({});
+  const [assignments, setAssignments] = useState<CardAssignment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCardData = async () => {

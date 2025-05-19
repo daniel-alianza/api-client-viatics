@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCollaborators } from '@/features/collaborators-w-card/hooks/useCollaborators';
 import {
   Table,
@@ -10,13 +10,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  RefreshCw,
-  AlertCircle,
-  Loader2,
-  Download,
-  CreditCard,
-} from 'lucide-react';
+import { AlertCircle, Loader2, Download, CreditCard } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -31,6 +25,7 @@ import DownloadModal from './DownloadModal';
 import type { Collaborator } from '@/features/collaborators-w-card/interfaces/types';
 import { collaboratorService } from '@/services/collaboratorService';
 import { toast } from 'sonner';
+import { getCompanies, Company } from '@/services/info-moduleService';
 
 export default function CollaboratorTable() {
   const { collaborators, loading, error, refreshCollaborators } =
@@ -45,6 +40,22 @@ export default function CollaboratorTable() {
     useState<Collaborator | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+
+  // Estado para compañías y filtro
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<string>('all');
+
+  useEffect(() => {
+    getCompanies()
+      .then(setCompanies)
+      .catch(() => setCompanies([]));
+  }, []);
+
+  // Filtrar colaboradores por compañía
+  const filteredCollaborators =
+    selectedCompany !== 'all'
+      ? collaborators.filter(c => c.companyId?.toString() === selectedCompany)
+      : collaborators;
 
   const handleAssignCard = async () => {
     if (!selectedCollaborator || !cardNumber.trim()) {
@@ -90,24 +101,29 @@ export default function CollaboratorTable() {
             onClick={() => setShowDownloadModal(true)}
             variant='outline'
             className='border-[#F34602] text-[#F34602] hover:bg-orange-50'
-            disabled={loading || collaborators.length === 0}
+            disabled={loading || filteredCollaborators.length === 0}
           >
             <Download className='mr-2 h-4 w-4' />
             Descargar asignación por archivo
           </Button>
-          <Button
-            onClick={refreshCollaborators}
-            variant='outline'
-            className='border-[#F34602] text-[#F34602] hover:bg-orange-50'
-            disabled={loading}
+          {/* Select de filtro por compañía */}
+          <Select
+            value={selectedCompany}
+            onValueChange={setSelectedCompany}
+            disabled={loading || companies.length === 0}
           >
-            {loading ? (
-              <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-            ) : (
-              <RefreshCw className='mr-2 h-4 w-4' />
-            )}
-            Actualizar
-          </Button>
+            <SelectTrigger className='border-[#F34602] text-[#F34602] min-w-[180px]'>
+              <SelectValue placeholder='Filtrar por compañía' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>Todas las compañías</SelectItem>
+              {companies.map(company => (
+                <SelectItem key={company.id} value={company.id.toString()}>
+                  {company.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button
             onClick={() => setIsAssigning(!isAssigning)}
             className='bg-[#F34602] hover:bg-orange-600 transition-all duration-300'
@@ -142,7 +158,7 @@ export default function CollaboratorTable() {
                 <SelectValue placeholder='Seleccionar colaborador' />
               </SelectTrigger>
               <SelectContent>
-                {collaborators
+                {filteredCollaborators
                   .filter(collab => !collab.cards.some(card => card.isActive))
                   .map(collab => (
                     <SelectItem key={collab.id} value={collab.id.toString()}>
@@ -156,7 +172,7 @@ export default function CollaboratorTable() {
                 <Input
                   placeholder='Email'
                   value={
-                    collaborators
+                    filteredCollaborators
                       .filter(c => !c.cards.some(card => card.isActive))
                       .find(c => c.id.toString() === selectedCollaborator)
                       ?.email || ''
@@ -229,7 +245,7 @@ export default function CollaboratorTable() {
                   </div>
                 </TableCell>
               </TableRow>
-            ) : collaborators.length === 0 ? (
+            ) : filteredCollaborators.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={5}
@@ -239,7 +255,7 @@ export default function CollaboratorTable() {
                 </TableCell>
               </TableRow>
             ) : (
-              collaborators.map(collaborator => (
+              filteredCollaborators.map(collaborator => (
                 <CollaboratorRow
                   key={collaborator.id}
                   collaborator={collaborator}
@@ -269,7 +285,9 @@ export default function CollaboratorTable() {
       <DownloadModal
         isOpen={showDownloadModal}
         onClose={() => setShowDownloadModal(false)}
-        collaborators={collaborators}
+        collaborators={filteredCollaborators}
+        selectedCompany={selectedCompany}
+        companies={companies}
       />
     </div>
   );

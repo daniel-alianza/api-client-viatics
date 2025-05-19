@@ -19,7 +19,6 @@ import { ReassignmentDialog } from './reassignment-dialog';
 
 export default function CardAssignmentTable() {
   const { approvedExpenses, loading, error } = useApprovedExpenses();
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const {
     editingAmounts,
     editingSigns,
@@ -28,6 +27,10 @@ export default function CardAssignmentTable() {
     handleAmountChange,
     handleSignChange,
   } = useCardAssignments(approvedExpenses);
+  const [editingStatus, setEditingStatus] = useState<{
+    [key: number]: '0' | '1' | '2' | '3';
+  }>({});
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
   const {
     isProcessing,
@@ -38,6 +41,13 @@ export default function CardAssignmentTable() {
     updateDialogData,
     handleDialogSubmit,
   } = useCardReassignment();
+
+  const handleStatusChange = (id: number, value: '0' | '1' | '2' | '3') => {
+    setEditingStatus(prev => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
 
   const handleReassignment = useCallback(() => {
     // Validar que todos los registros tengan signo y monto
@@ -72,6 +82,7 @@ export default function CardAssignmentTable() {
         sign: editingSigns[expense.id] || '+',
         amountToAdjust: editingAmounts[expense.id] || 0,
         status: 'DISPERSADA' as const,
+        statusChange: editingStatus[expense.id] || '0',
       }));
 
       await handleDialogSubmit(updatedExpenses);
@@ -83,6 +94,7 @@ export default function CardAssignmentTable() {
     approvedExpenses,
     editingSigns,
     editingAmounts,
+    editingStatus,
     handleDialogSubmit,
     getCardNumber,
   ]);
@@ -133,6 +145,7 @@ export default function CardAssignmentTable() {
                 <th className='py-3 px-4 text-left'>Monto a Ajustar</th>
                 <th className='py-3 px-4 text-left'>Fecha de Inicio</th>
                 <th className='py-3 px-4 text-left'>Fecha de Fin</th>
+                <th className='py-3 px-4 text-left'>Cambio de Estatus</th>
               </tr>
             </thead>
             <tbody>
@@ -200,13 +213,34 @@ export default function CardAssignmentTable() {
                     </td>
                     <td className='py-3 px-4'>
                       {formatDate(
-                        expense.startDate || expense.departureDate || 'N/A',
+                        expense.startDate || expense.disbursementDate || 'N/A',
                       )}
                     </td>
                     <td className='py-3 px-4'>
                       {expense.endDate || expense.returnDate
                         ? formatDate(expense.endDate || expense.returnDate)
                         : '-'}
+                    </td>
+                    <td className='py-3 px-4'>
+                      <Select
+                        value={editingStatus[expense.id] || '0'}
+                        onValueChange={value =>
+                          handleStatusChange(
+                            expense.id,
+                            value as '0' | '1' | '2' | '3',
+                          )
+                        }
+                      >
+                        <SelectTrigger className='w-[120px]'>
+                          <SelectValue placeholder='Sin cambio' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='0'>Sin cambio</SelectItem>
+                          <SelectItem value='1'>Activo</SelectItem>
+                          <SelectItem value='2'>Inactivo</SelectItem>
+                          <SelectItem value='3'>Cancelado</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </td>
                   </tr>
                 ))
