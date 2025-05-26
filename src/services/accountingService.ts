@@ -8,12 +8,16 @@ interface Card {
   limite: number;
 }
 
+interface ApiResponse {
+  cards?: Card[];
+}
+
 /**
  * Obtiene la tarjeta activa de un usuario por su ID
  */
 export async function getUserCard(userId: number) {
   try {
-    const response = await apiFetch(`/users/${userId}`);
+    const response = (await apiFetch(`/users/${userId}`)) as ApiResponse;
 
     // Buscar la tarjeta activa del usuario
     const activeCard = response.cards?.find((card: Card) => card.isActive);
@@ -184,11 +188,6 @@ export async function downloadAssignmentsCSV(
     console.error('Error generating CSV:', error);
     throw error;
   }
-}
-
-interface UpdateCardAndExpenseResponse {
-  success: boolean;
-  message?: string;
 }
 
 export async function updateCardAndExpense(

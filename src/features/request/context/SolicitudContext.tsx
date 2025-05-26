@@ -1,6 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState } from 'react';
-import { getUserData } from '@/services/requestService';
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 interface UserRequestData {
   companyName: string;
@@ -14,28 +20,38 @@ interface SolicitudContextProps {
   fetchUserRequestData: () => void;
 }
 
+interface SolicitudProviderProps {
+  children: ReactNode;
+}
+
 const SolicitudContext = createContext<SolicitudContextProps | undefined>(
   undefined,
 );
 
-export const SolicitudProvider: React.FC = ({ children }) => {
+export const SolicitudProvider: React.FC<SolicitudProviderProps> = ({
+  children,
+}) => {
   const [userRequestData, setUserRequestData] =
     useState<UserRequestData | null>(null);
+  const { user } = useAuth();
 
   const fetchUserRequestData = () => {
-    const userData = getUserData();
-    // console.log('User data fetched from getUserData:', userData); // Debug log
-    if (userData) {
+    if (user) {
       const requestData = {
-        companyName: userData.company?.name || 'N/A',
-        branchName: userData.branch?.name || 'N/A',
-        areaName: userData.area?.name || 'N/A',
-        cardNumber: userData.cards?.[0]?.cardNumber || 'N/A',
+        companyName: user.company?.name || 'N/A',
+        branchName: user.branch?.name || 'N/A',
+        areaName: user.area?.name || 'N/A',
+        cardNumber: user.cards?.[0]?.cardNumber || 'N/A',
       };
-      // console.log('Request data being set in context:', requestData); // Debug log
       setUserRequestData(requestData);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      fetchUserRequestData();
+    }
+  }, [user]);
 
   return (
     <SolicitudContext.Provider

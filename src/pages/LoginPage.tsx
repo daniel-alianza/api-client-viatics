@@ -3,8 +3,9 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { useLogin } from '@/hooks/useLogin';
-import { setUserData } from '@/services/requestService';
-import { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import type { UserData } from '@/services/requestService';
 
 export const LoginPage = () => {
   const {
@@ -16,27 +17,19 @@ export const LoginPage = () => {
     setError,
     handleLogin,
   } = useLogin();
-
-  useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      console.log('Datos del usuario encontrados en localStorage:', user); // Depuración
-      setUserData(JSON.parse(user));
-    } else {
-      console.log('No se encontraron datos del usuario en localStorage.'); // Depuración
-    }
-  }, []);
+  const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   const handleLoginWithUserData = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     try {
-      const user = await handleLogin(e); // Pass the event object to handleLogin
-      // console.log('User data after login:', user); // Debug log
-      if (user) {
-        setUserData(user); // Store user data globally
-        // console.log('User data set successfully'); // Debug log
+      const response = await handleLogin(e);
+      if (response && typeof response === 'object' && 'user' in response) {
+        const userData = response.user as UserData;
+        setUser(userData);
+        navigate('/dashboard');
       }
     } catch (err) {
       console.error('Error during login:', err);

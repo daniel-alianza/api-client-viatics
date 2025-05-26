@@ -7,7 +7,7 @@ const ROUTE_MAPPING = {
   'accounting-auth': '/accounting-authorization/page',
   'travel-request': '/authorization/page',
   'collab-w-card': '/collaborators-w-card/page',
-  'expense-verification': '/expense-verification/page',
+  'expense-verification': '/travel-expense-checks/page',
   'travel-verification': '/verification-of-travel/page',
 } as const;
 
@@ -59,6 +59,15 @@ export const useMenu = () => {
     },
   ];
 
+  // Filtrar las opciones del menú según el rol del usuario
+  const filteredMenuOptions = menuOptions.filter(option => {
+    if (userRole === 4) {
+      // Si es colaborador
+      return ['new-expense', 'verification'].includes(option.id);
+    }
+    return true; // Para otros roles, mostrar todas las opciones
+  });
+
   const subMenuOptions = {
     verification: [
       {
@@ -108,7 +117,7 @@ export const useMenu = () => {
     selectedOption,
     searchFocused,
     setSearchFocused,
-    menuOptions,
+    menuOptions: filteredMenuOptions, // Usar las opciones filtradas
     subMenuOptions,
     handleMenuHover,
     handleMenuLeave,

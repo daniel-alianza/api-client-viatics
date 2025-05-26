@@ -1,15 +1,15 @@
 import { useState } from 'react';
 
 interface ModalState {
-  showModal: boolean;
+  isOpen: boolean;
   title: string;
   message: string;
-  type: 'error' | 'warning' | 'success';
+  type?: 'error' | 'warning' | 'success';
 }
 
 export const useRequestErrorModal = () => {
   const [modalState, setModalState] = useState<ModalState>({
-    showModal: false,
+    isOpen: false,
     title: '',
     message: '',
     type: 'error',
@@ -17,7 +17,7 @@ export const useRequestErrorModal = () => {
 
   const showErrorModal = (title: string, message: string) => {
     setModalState({
-      showModal: true,
+      isOpen: true,
       title,
       message,
       type: 'error',
@@ -26,7 +26,7 @@ export const useRequestErrorModal = () => {
 
   const showWarningModal = (title: string, message: string) => {
     setModalState({
-      showModal: true,
+      isOpen: true,
       title,
       message,
       type: 'warning',
@@ -35,7 +35,7 @@ export const useRequestErrorModal = () => {
 
   const showSuccessModal = (title: string, message: string) => {
     setModalState({
-      showModal: true,
+      isOpen: true,
       title,
       message,
       type: 'success',
@@ -43,7 +43,7 @@ export const useRequestErrorModal = () => {
   };
 
   const closeModal = () => {
-    setModalState(prev => ({ ...prev, showModal: false }));
+    setModalState(prev => ({ ...prev, isOpen: false }));
   };
 
   return {

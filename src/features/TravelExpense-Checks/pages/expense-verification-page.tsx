@@ -1,52 +1,79 @@
-import type React from 'react';
-import { ExpenseForm } from '@/features/TravelExpense-Checks/components/expense-form';
+import React from 'react';
 import { ExpenseProvider } from '@/features/TravelExpense-Checks/context/expense-context';
-import { ExpenseSelectModal } from '@/features/TravelExpense-Checks/components/expense-select-modal';
 import { useExpense } from '@/features/TravelExpense-Checks/context/expense-context';
-import { useEffect, useState, useCallback } from 'react';
+import Navbar from '@/features/collaborators-w-card/components/navbar';
 
-const ExpenseVerificationContent: React.FC = () => {
-  const { loadPendingExpenses } = useExpense();
-  const [showSelectModal, setShowSelectModal] = useState(true);
+const ExpenseVerificationTable: React.FC = () => {
+  const { pendingExpenses, error } = useExpense();
 
-  const handleLoadExpenses = useCallback(async () => {
-    await loadPendingExpenses();
-  }, [loadPendingExpenses]);
+  if (error) {
+    return <div className='text-center text-red-500 py-8'>{error}</div>;
+  }
 
-  useEffect(() => {
-    handleLoadExpenses();
-  }, [handleLoadExpenses]);
-
-  const handleExpenseSelect = (expenseId: string) => {
-    // Aquí se cargarían los datos del viático seleccionado
-    console.log('Selected expense:', expenseId);
-    setShowSelectModal(false);
-  };
+  if (!pendingExpenses || pendingExpenses.length === 0) {
+    return (
+      <div className='text-center text-[#F34602] py-8 font-semibold text-lg'>
+        Aún no hay comprobaciones por aprobar
+      </div>
+    );
+  }
 
   return (
-    <div className='min-h-screen flex flex-col bg-gray-50'>
-      <main className='flex-grow'>
-        <div className='container mx-auto px-4 py-10'>
-          <div className='max-w-4xl mx-auto'>
-            <div className='mb-8 text-center'>
-              <h1 className='text-3xl md:text-4xl font-bold text-[#02082C]'>
-                Travel Expense Verification
-              </h1>
-              <p className='mt-2 text-gray-600'>
-                View your travel expense verification details
-              </p>
-            </div>
+    <div className='overflow-x-auto rounded-xl shadow-lg bg-white p-4'>
+      <table className='min-w-full divide-y divide-[#F34602] rounded-xl overflow-hidden'>
+        <thead className='bg-gradient-to-r from-[#F34602] to-[#ff7e29] text-white'>
+          <tr>
+            <th className='px-6 py-4 text-left text-xs font-bold uppercase tracking-wider rounded-tl-xl'>
+              ID
+            </th>
+            <th className='px-6 py-4 text-left text-xs font-bold uppercase tracking-wider'>
+              Descripción
+            </th>
+            <th className='px-6 py-4 text-left text-xs font-bold uppercase tracking-wider'>
+              Fecha
+            </th>
+            <th className='px-6 py-4 text-left text-xs font-bold uppercase tracking-wider rounded-tr-xl'>
+              Monto
+            </th>
+          </tr>
+        </thead>
+        <tbody className='bg-white divide-y divide-gray-200'>
+          {pendingExpenses.map((expense, idx) => (
+            <tr
+              key={expense.id}
+              className={`transition-colors ${
+                idx % 2 === 0 ? 'bg-[#FFF6F2]' : 'bg-white'
+              } hover:bg-[#F34602]/10`}
+            >
+              <td className='px-6 py-4 whitespace-nowrap text-sm font-bold text-[#02082C]'>
+                {expense.id}
+              </td>
+              <td className='px-6 py-4 whitespace-nowrap text-sm text-[#02082C]/80'>
+                {expense.description}
+              </td>
+              <td className='px-6 py-4 whitespace-nowrap text-sm text-[#02082C]/80'>
+                {expense.date}
+              </td>
+              <td className='px-6 py-4 whitespace-nowrap text-sm font-bold text-[#F34602]'>
+                ${expense.amount.toFixed(2)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
 
-            <ExpenseForm />
-          </div>
+const ExpenseVerificationPageContent: React.FC = () => {
+  return (
+    <div className='min-h-screen flex flex-col bg-gray-50'>
+      <Navbar />
+      <main className='flex-grow flex items-center justify-center'>
+        <div className='container mx-auto px-4 py-10 max-w-3xl'>
+          <ExpenseVerificationTable />
         </div>
       </main>
-
-      <ExpenseSelectModal
-        isOpen={showSelectModal}
-        onClose={() => setShowSelectModal(false)}
-        onSelect={handleExpenseSelect}
-      />
     </div>
   );
 };
@@ -54,7 +81,7 @@ const ExpenseVerificationContent: React.FC = () => {
 export const ExpenseVerificationPage: React.FC = () => {
   return (
     <ExpenseProvider>
-      <ExpenseVerificationContent />
+      <ExpenseVerificationPageContent />
     </ExpenseProvider>
   );
 };

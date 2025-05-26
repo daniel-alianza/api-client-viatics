@@ -155,13 +155,8 @@ export const ExpenseForm: React.FC = () => {
       />
 
       <div className='mt-8 flex justify-end'>
-        <Button
-          type='submit'
-          loading={isSubmitting}
-          disabled={isSubmitting}
-          size='lg'
-        >
-          Verificar Gastos
+        <Button type='submit' disabled={isSubmitting} size='lg'>
+          {isSubmitting ? 'Enviando...' : 'Enviar'}
         </Button>
       </div>
     </motion.form>

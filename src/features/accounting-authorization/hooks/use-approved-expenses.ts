@@ -14,7 +14,19 @@ export function useApprovedExpenses() {
       try {
         setLoading(true);
         const data = await getApprovedExpenses();
-        setApprovedExpenses(data || []);
+        const cardAssignments: CardAssignment[] = data.map(assignment => ({
+          ...assignment,
+          sign: '',
+          requestedAmount: assignment.limit,
+          amountToAdjust: assignment.limit,
+          startDate: assignment.exitDate,
+          endDate: assignment.returnDate,
+          status:
+            assignment.status === 'Approved'
+              ? 'APROBADA'
+              : ('DISPERSADA' as const),
+        }));
+        setApprovedExpenses(cardAssignments || []);
         setError(null);
       } catch (err) {
         console.error('Error fetching approved expenses:', err);

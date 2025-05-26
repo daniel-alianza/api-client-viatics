@@ -34,6 +34,10 @@ export const AppRoutes = () => {
         path='/expense-verification/page'
         element={<ExpenseVerificationPage />}
       />
+      <Route
+        path='/travel-expense-checks/page'
+        element={<ExpenseVerificationPage />}
+      />
     </Routes>
   );
 };

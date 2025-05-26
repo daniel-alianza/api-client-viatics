@@ -10,10 +10,13 @@ export interface TravelExpenses {
 }
 
 export interface TravelExpenseFormData {
+  userId: string;
+  totalAmount: number;
   departureDate?: Date;
   returnDate?: Date;
   distributionDate?: Date;
-  objectives: string[];
+  travelReason: string;
+  travelObjectives: string;
   expenses: TravelExpenses;
 }
 

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import {
+import type {
   TravelExpenses,
   TravelExpenseFormData,
 } from '@/features/request/interfaces/solicitud.types';
 
-export function useTravelExpenseForm() {
+export const useTravelExpenseForm = () => {
   const [departureDate, setDepartureDate] = useState<Date | undefined>();
   const [returnDate, setReturnDate] = useState<Date | undefined>();
   const [distributionDate, setDistributionDate] = useState<Date | undefined>();
@@ -79,31 +79,46 @@ export function useTravelExpenseForm() {
   );
 
   const getFormData = (): TravelExpenseFormData => {
-    const validateDate = (date: Date | undefined) => {
-      try {
-        if (!date) return undefined;
-        const timestamp = date.getTime();
-        if (isNaN(timestamp)) return undefined;
-        return date.toISOString();
-      } catch (error) {
-        console.error('Error al validar la fecha:', error);
-        return undefined;
-      }
-    };
-
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
     return {
-      departureDate: validateDate(departureDate),
-      returnDate: validateDate(returnDate),
-      distributionDate: validateDate(distributionDate),
-      travelReason: travelReason.trim(),
-      travelObjectives: (travelObjectives || '').trim(),
-      expenses: Object.fromEntries(
-        Object.entries(expenses).map(([key, value]) => [
-          key,
-          Number(value) || 0,
-        ]),
-      ),
+      userId: user.id || '',
+      totalAmount: totalExpenses,
+      departureDate: departureDate ? new Date(departureDate) : undefined,
+      returnDate: returnDate ? new Date(returnDate) : undefined,
+      distributionDate: distributionDate
+        ? new Date(distributionDate)
+        : undefined,
+      travelReason,
+      travelObjectives,
+      expenses: {
+        transportation: expenses.transportation || 0,
+        tolls: expenses.tolls || 0,
+        lodging: expenses.lodging || 0,
+        food: expenses.food || 0,
+        freight: expenses.freight || 0,
+        tools: expenses.tools || 0,
+        shipping: expenses.shipping || 0,
+        miscellaneous: expenses.miscellaneous || 0,
+      },
     };
+  };
+
+  const resetForm = () => {
+    setDepartureDate(undefined);
+    setReturnDate(undefined);
+    setDistributionDate(undefined);
+    setTravelReason('');
+    setTravelObjectives('');
+    setExpenses({
+      transportation: 0,
+      tolls: 0,
+      lodging: 0,
+      food: 0,
+      freight: 0,
+      tools: 0,
+      shipping: 0,
+      miscellaneous: 0,
+    });
   };
 
   return {
@@ -124,5 +139,6 @@ export function useTravelExpenseForm() {
     updateExpense,
     totalExpenses,
     getFormData,
+    resetForm,
   };
-}
+};

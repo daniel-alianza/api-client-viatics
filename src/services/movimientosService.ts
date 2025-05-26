@@ -18,13 +18,15 @@ export interface ApiResponse<T> {
 }
 
 export const getMovimientosByViatico = async (
-  idViatico: string,
+  cardNumber: string,
+  startDate: string,
+  endDate: string,
 ): Promise<ApiResponse<Movimiento[]>> => {
   try {
     const response = await apiFetch(
-      `/movimientos/viatico?idViatico=${idViatico}`,
+      `/checks/movements?cardNumber=${cardNumber}&startDate=${startDate}&endDate=${endDate}`,
     );
-    return response;
+    return response as ApiResponse<Movimiento[]>;
   } catch (error) {
     return {
       status: 'error',
@@ -34,3 +36,13 @@ export const getMovimientosByViatico = async (
     };
   }
 };
+
+export async function getMovimientos(): Promise<ApiResponse<Movimiento[]>> {
+  try {
+    const response = await apiFetch('/movimientos');
+    return response as ApiResponse<Movimiento[]>;
+  } catch (error) {
+    console.error('Error al obtener los movimientos:', error);
+    throw error;
+  }
+}

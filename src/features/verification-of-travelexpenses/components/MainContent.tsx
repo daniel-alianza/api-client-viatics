@@ -81,19 +81,6 @@ export default function MainContent() {
     return cardNumber.replace(/-/g, '');
   };
 
-  const formatCompanyName = (company: string) => {
-    switch (company) {
-      case 'SBO_FGE':
-        return 'FG Electrical';
-      case 'SBO_Alianza':
-        return 'Alianza Electrica';
-      case 'SBO_MANUFACTURING':
-        return 'Manufacturing';
-      default:
-        return company;
-    }
-  };
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -120,7 +107,8 @@ export default function MainContent() {
           const expensesWithExtractos = await Promise.all(
             viaticosResponse.data.map(async viatico => {
               try {
-                // Solo consultar extractos si hay una tarjeta válida
+                // Verificar si el usuario tiene tarjetas
+                const userCard = user.cards?.[0]?.cardNumber;
                 let extractosData = {
                   totalExtractos: '-' as string | number,
                   faltantes: '-' as string | number,
@@ -128,15 +116,15 @@ export default function MainContent() {
                   diasRestantes: '-' as string | number,
                 };
 
-                if (viatico.NumTarjeta) {
+                if (userCard) {
                   const extractosResponse = await getMovements(
-                    formatCardNumber(viatico.NumTarjeta),
-                    viatico.FechaSalida,
-                    viatico.FechaRegreso,
+                    formatCardNumber(userCard),
+                    viatico.departureDate,
+                    viatico.returnDate,
                   );
                   console.log(
                     'Respuesta de extractos para viático',
-                    viatico.IdViaticos,
+                    viatico.id,
                     ':',
                     extractosResponse,
                   );
@@ -159,40 +147,40 @@ export default function MainContent() {
                 }
 
                 return {
-                  id: viatico.IdViaticos.toString(),
-                  fechaAutorizacion: formatDate(viatico.FechaAutorizacion),
-                  solicitante: viatico.Email,
-                  compania: formatCompanyName(viatico.Sociedad),
-                  cantidadSolicitada: viatico.CantidadTotal,
-                  tarjeta: formatCardNumber(viatico.NumTarjeta),
-                  fechaSalida: formatDate(viatico.FechaSalida),
-                  fechaRegreso: formatDate(viatico.FechaRegreso),
+                  id: viatico.id.toString(),
+                  fechaAutorizacion: formatDate(viatico.disbursementDate),
+                  solicitante: viatico.user.email,
+                  compania: viatico.user.company.name,
+                  cantidadSolicitada: viatico.totalAmount,
+                  tarjeta: userCard ? formatCardNumber(userCard) : '-',
+                  fechaSalida: formatDate(viatico.departureDate),
+                  fechaRegreso: formatDate(viatico.returnDate),
                   ...extractosData,
-                  noSolicitud: viatico.IdViaticos.toString(),
-                  sociedad: viatico.Sociedad,
+                  noSolicitud: viatico.id.toString(),
+                  sociedad: viatico.user.company.name,
                 };
               } catch (error) {
                 console.error(
                   'Error al obtener extractos para viático',
-                  viatico.IdViaticos,
+                  viatico.id,
                   ':',
                   error,
                 );
                 return {
-                  id: viatico.IdViaticos.toString(),
-                  fechaAutorizacion: formatDate(viatico.FechaAutorizacion),
-                  solicitante: viatico.Email,
-                  compania: formatCompanyName(viatico.Sociedad),
-                  cantidadSolicitada: viatico.CantidadTotal,
-                  tarjeta: formatCardNumber(viatico.NumTarjeta),
-                  fechaSalida: formatDate(viatico.FechaSalida),
-                  fechaRegreso: formatDate(viatico.FechaRegreso),
+                  id: viatico.id.toString(),
+                  fechaAutorizacion: formatDate(viatico.disbursementDate),
+                  solicitante: viatico.user.email,
+                  compania: viatico.user.company.name,
+                  cantidadSolicitada: viatico.totalAmount,
+                  tarjeta: userCard ? formatCardNumber(userCard) : '-',
+                  fechaSalida: formatDate(viatico.departureDate),
+                  fechaRegreso: formatDate(viatico.returnDate),
                   totalExtractos: '-',
                   faltantes: '-',
                   comprobados: '-',
                   diasRestantes: '-',
-                  noSolicitud: viatico.IdViaticos.toString(),
-                  sociedad: viatico.Sociedad,
+                  noSolicitud: viatico.id.toString(),
+                  sociedad: viatico.user.company.name,
                 };
               }
             }),
@@ -234,15 +222,49 @@ export default function MainContent() {
     setErrorMovimientos(null);
 
     try {
-      const response = await getMovimientosByViatico(id);
+      // Obtener los datos del usuario desde localStorage
+      const userData = localStorage.getItem('user');
+      if (!userData) {
+        setErrorMovimientos('No se encontraron datos del usuario');
+        return;
+      }
+
+      const user: User = JSON.parse(userData);
+      const userCard = user.cards?.[0]?.cardNumber;
+
+      if (!userCard) {
+        setErrorMovimientos('No se encontró una tarjeta asociada al usuario');
+        return;
+      }
+
+      // Encontrar el viático seleccionado
+      const selectedExpense = travelExpenses.find(expense => expense.id === id);
+      if (!selectedExpense) {
+        setErrorMovimientos('No se encontró el viático seleccionado');
+        return;
+      }
+
+      const response = await getMovimientosByViatico(
+        userCard,
+        selectedExpense.fechaSalida,
+        selectedExpense.fechaRegreso,
+      );
+
       if (response.status === 'success' && response.data) {
-        setMovimientos(response.data);
+        if (response.data.length === 0) {
+          setErrorMovimientos('No hay movimientos aún para este viático');
+        } else {
+          setMovimientos(response.data);
+        }
       } else {
         setErrorMovimientos(
-          response.message || 'Error al cargar los movimientos',
+          response.message === 'El viático no existe'
+            ? 'No hay movimientos aún para este viático'
+            : response.message || 'Error al cargar los movimientos',
         );
       }
-    } catch {
+    } catch (error) {
+      console.error('Error al cargar los movimientos:', error);
       setErrorMovimientos('Error al cargar los movimientos');
     } finally {
       setLoadingMovimientos(false);
@@ -358,7 +380,7 @@ export default function MainContent() {
             ) : filteredExpenses.length === 0 ? (
               <tr>
                 <td colSpan={12} className='px-6 py-4 text-center'>
-                  No se encontraron gastos de viaje
+                  Aún no hay movimientos
                 </td>
               </tr>
             ) : (

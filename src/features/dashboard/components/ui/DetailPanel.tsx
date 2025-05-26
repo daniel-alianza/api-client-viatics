@@ -1,6 +1,6 @@
 /* eslint-disable no-constant-binary-expression */
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, UserRound, X } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
 import { menuOptions, subMenuOptions } from '@/lib/menuOptions';
 
 interface DetailPanelProps {
@@ -67,10 +67,12 @@ export const DetailPanel = ({
                     }}
                   >
                     {selected?.icon && (
-                      <selected.icon
+                      <div
                         className='w-7 h-7'
                         style={{ color: selected?.color || '#F34602' }}
-                      />
+                      >
+                        {selected.icon}
+                      </div>
                     )}
                   </div>
                   <h2 className='text-2xl font-bold text-[#02082C]'>

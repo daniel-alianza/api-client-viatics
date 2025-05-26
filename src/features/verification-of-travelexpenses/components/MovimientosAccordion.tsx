@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import { Movimiento } from '../../../services/movimientosService';
-import React from 'react';
 import ComprobacionModal from './ComprobacionModal';
 import { motion } from 'framer-motion';
 
@@ -22,17 +21,7 @@ export default function MovimientosAccordion({
 }: MovimientosAccordionProps) {
   const [modalOpenIndex, setModalOpenIndex] = useState<number | null>(null);
 
-  const handleComprobacion = (
-    _file: File,
-    _tipo: string,
-    _data?: {
-      responsable: string;
-      motivo: string;
-      descripcion: string;
-      importe: string;
-    },
-  ) => {
-    // Aquí puedes manejar el archivo y el tipo
+  const handleComprobacion = () => {
     // Por ahora solo cerramos el modal
     setModalOpenIndex(null);
   };

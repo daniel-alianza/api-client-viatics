@@ -14,10 +14,10 @@ export const useLogin = () => {
     setError(null);
 
     try {
-      const user = await loginUser({ email, password });
-      localStorage.setItem('user', JSON.stringify(user)); // Save user data in localStorage
+      const response = await loginUser({ email, password });
+      localStorage.setItem('user', JSON.stringify(response)); // Save user data in localStorage
       navigate('/dashboard');
-      return user; // Ensure user data is returned
+      return response; // Ensure user data is returned
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
       console.error('Error during login:', err); // Debug log

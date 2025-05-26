@@ -13,8 +13,8 @@ export default function MainContent() {
     handleMenuHover,
     handleMenuLeave,
     handleOptionClick,
-    handleSubOptionClick,
     closePanel,
+    handleSubOptionClick,
   } = useMenu();
 
   const { randomQuote } = useDailyQuote();
@@ -93,8 +93,8 @@ export default function MainContent() {
           subMenuOptions[selectedOption as keyof typeof subMenuOptions] && (
             <SubMenu
               selectedOption={selectedOption}
-              handleSubOptionClick={handleSubOptionClick}
-              closePanel={closePanel}
+              onClose={closePanel}
+              onSubOptionClick={handleSubOptionClick}
             />
           )}
       </div>

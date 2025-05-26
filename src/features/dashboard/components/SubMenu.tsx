@@ -1,11 +1,10 @@
-import { memo } from 'react';
 import { motion } from 'framer-motion';
-import { X, ChevronRight } from 'lucide-react';
-import { useMenu } from '@/features/dashboard/hooks/useMenu';
+import { X } from 'lucide-react';
 
 interface SubMenuProps {
   selectedOption: string;
   onClose: () => void;
+  onSubOptionClick?: (subOptionId: string) => void;
 }
 
 interface SubOption {
@@ -15,16 +14,24 @@ interface SubOption {
 
 const subMenuOptions: Record<string, SubOption[]> = {
   verification: [
-    { id: 'option1', label: 'Option 1' },
-    { id: 'option2', label: 'Option 2' },
+    { id: 'expense-verification', label: 'Verificación de Gastos' },
+    { id: 'travel-verification', label: 'Verificación de Viajes' },
   ],
 };
 
 export const SubMenu: React.FC<SubMenuProps> = ({
   selectedOption,
   onClose,
+  onSubOptionClick,
 }) => {
   const options = subMenuOptions[selectedOption] || [];
+
+  const handleSubOptionClick = (subOptionId: string) => {
+    if (onSubOptionClick) {
+      onSubOptionClick(subOptionId);
+    }
+    onClose();
+  };
 
   return (
     <motion.div
@@ -55,10 +62,7 @@ export const SubMenu: React.FC<SubMenuProps> = ({
             <button
               key={subOption.id}
               className='w-full text-left px-4 py-2 hover:bg-gray-100 rounded-md'
-              onClick={() => {
-                // Handle sub-option click
-                onClose();
-              }}
+              onClick={() => handleSubOptionClick(subOption.id)}
             >
               {subOption.label}
             </button>

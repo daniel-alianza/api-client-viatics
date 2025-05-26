@@ -86,7 +86,6 @@ export const ExpenseProvider = ({ children }: { children: ReactNode }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   // Cargar usuario desde localStorage al montar el componente
   useEffect(() => {
@@ -123,7 +122,6 @@ export const ExpenseProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      setIsLoading(true);
       setError(null);
 
       const response = await solicitudesService.getViaticosPorEmail(email);
@@ -149,8 +147,6 @@ export const ExpenseProvider = ({ children }: { children: ReactNode }) => {
       const errorMessage =
         error instanceof Error ? error.message : 'Error desconocido';
       setError(`Error al cargar los viáticos: ${errorMessage}`);
-    } finally {
-      setIsLoading(false);
     }
   }, [userData?.email]); // ✅ quitamos isLoading
 

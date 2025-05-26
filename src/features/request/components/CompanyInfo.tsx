@@ -1,30 +1,22 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Building, MapPin, Briefcase, CreditCard } from 'lucide-react';
-import { useSolicitudContext } from '../context/SolicitudContext';
-import { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CompanyInfo() {
-  const { userRequestData, fetchUserRequestData } = useSolicitudContext();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    if (!userRequestData) {
-      fetchUserRequestData();
-    }
-  }, [userRequestData]);
-
-  const hasCardNumber =
-    userRequestData?.cardNumber && userRequestData.cardNumber !== 'N/A';
+  const hasCardNumber = user?.cards?.[0]?.cardNumber;
 
   return (
-    <div className='space-y-6'>
-      <div className='flex items-center gap-2 mb-4'>
-        <Building className='h-5 w-5 text-[#F34602]' />
-        <h3 className='text-lg font-medium' style={{ color: '#02082C' }}>
+    <div className='bg-white rounded-lg p-8'>
+      <div className='flex items-center gap-2 mb-8'>
+        <Building className='h-6 w-6 text-[#F34602]' />
+        <h3 className='text-xl font-medium text-[#02082C]'>
           Información de su empresa
         </h3>
       </div>
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8'>
         <div className='space-y-2'>
           <Label
             htmlFor='company'
@@ -35,7 +27,7 @@ export default function CompanyInfo() {
           <div className='relative'>
             <Input
               id='company'
-              value={userRequestData?.companyName || ''}
+              value={user?.company?.name || 'N/A'}
               readOnly
               className={`pl-10 transition-all duration-200 border-slate-300 focus:border-[#F34602] focus:ring-[#F34602]/20 rounded-md ${
                 !hasCardNumber ? 'opacity-50 cursor-not-allowed' : ''
@@ -54,7 +46,7 @@ export default function CompanyInfo() {
           <div className='relative'>
             <Input
               id='branch'
-              value={userRequestData?.branchName || ''}
+              value={user?.branch?.name || 'N/A'}
               readOnly
               className={`pl-10 transition-all duration-200 border-slate-300 focus:border-[#F34602] focus:ring-[#F34602]/20 rounded-md ${
                 !hasCardNumber ? 'opacity-50 cursor-not-allowed' : ''
@@ -70,7 +62,7 @@ export default function CompanyInfo() {
           <div className='relative'>
             <Input
               id='area'
-              value={userRequestData?.areaName || ''}
+              value={user?.area?.name || 'N/A'}
               readOnly
               className={`pl-10 transition-all duration-200 border-slate-300 focus:border-[#F34602] focus:ring-[#F34602]/20 rounded-md ${
                 !hasCardNumber ? 'opacity-50 cursor-not-allowed' : ''
@@ -89,7 +81,7 @@ export default function CompanyInfo() {
           <div className='relative'>
             <Input
               id='cardNumber'
-              value={userRequestData?.cardNumber || ''}
+              value={user?.cards?.[0]?.cardNumber || 'N/A'}
               readOnly
               className={`pl-10 transition-all duration-200 border-slate-300 focus:border-[#F34602] focus:ring-[#F34602]/20 rounded-md ${
                 !hasCardNumber ? 'border-red-500' : ''

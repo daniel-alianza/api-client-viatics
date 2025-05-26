@@ -13,7 +13,15 @@ export interface ReassignmentDialogData {
   clientNumber: string;
 }
 
-export type StatusChange = '0' | '1' | '2' | '3' | 'PENDING';
+export type StatusChange =
+  | '0'
+  | '1'
+  | '2'
+  | '3'
+  | 'PENDING'
+  | 'ACTIVE'
+  | 'INACTIVE'
+  | 'CANCELLED';
 
 /**
  * Limita una cadena a un número máximo de caracteres
@@ -48,7 +56,6 @@ export function useCardReassignment() {
       expense: CardAssignment,
       sign: '+' | '-',
       amount: number,
-      statusChange: StatusChange = 'PENDING',
     ): CardReassignment => {
       // Asegurarnos de que las fechas estén en el formato correcto (YYYYMMDD)
       const formatDateToYYYYMMDD = (date: string | undefined): string => {
@@ -79,7 +86,7 @@ export function useCardReassignment() {
         amount,
         startDate,
         endDate,
-        statusChange,
+        statusChange: '0',
       };
     },
     [],
@@ -155,7 +162,6 @@ export function useCardReassignment() {
             expense,
             expense.sign as '+' | '-',
             expense.amountToAdjust,
-            expense.statusChange as StatusChange,
           ),
         );
 

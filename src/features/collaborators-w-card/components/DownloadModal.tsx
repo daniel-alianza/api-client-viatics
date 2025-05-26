@@ -142,6 +142,7 @@ export default function DownloadModal({
 
           return {
             id: collaborator.id,
+            userId: collaborator.id,
             cardNumber: activeCard?.cardNumber || '',
             assignedTo: collaborator.name
               .normalize('NFD')
@@ -153,6 +154,7 @@ export default function DownloadModal({
             limit: 0.01,
             exitDate: today.toISOString(), // Siempre usar la fecha actual como fecha de inicio
             returnDate: futureDate.toISOString(), // Fecha fin será 7 días después
+            status: 'ACTIVE',
           };
         });
 

@@ -11,9 +11,10 @@ import {
   MapPin,
   Wrench,
 } from 'lucide-react';
+import type { TravelExpenses } from '../interfaces/solicitud.types';
 
 interface EstimatedExpensesProps {
-  updateExpense: (key: string, value: string) => void;
+  updateExpense: (key: keyof TravelExpenses, value: string) => void;
   totalExpenses: number;
   disabled?: boolean;
 }
@@ -222,7 +223,7 @@ export default function EstimatedExpenses({
             htmlFor='miscellaneous'
             className='text-sm font-medium text-slate-700'
           >
-            Diversos
+            Misceláneos
           </Label>
           <div className='relative'>
             <Input
@@ -246,12 +247,12 @@ export default function EstimatedExpenses({
           </div>
         </div>
       </div>
-      <div className='mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200'>
-        <div className='flex justify-between items-center'>
-          <span className='font-medium text-slate-700'>Total:</span>
-          <span className='text-lg font-bold' style={{ color: '#02082C' }}>
+      <div className='flex justify-end mt-4'>
+        <div className='text-right'>
+          <p className='text-sm text-slate-600'>Total Estimado</p>
+          <p className='text-2xl font-bold text-[#F34602]'>
             ${totalExpenses.toFixed(2)}
-          </span>
+          </p>
         </div>
       </div>
     </div>

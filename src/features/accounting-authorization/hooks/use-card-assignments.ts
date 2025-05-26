@@ -13,18 +13,12 @@ export function useCardAssignments(approvedExpenses: CardAssignment[]) {
   const [editingSigns, setEditingSigns] = useState<{
     [key: number]: string;
   }>({});
-  const [editingStatus, setEditingStatus] = useState<{
-    [key: number]: '1' | '2' | '3' | '';
-  }>({});
   const [cardNumbers, setCardNumbers] = useState<{
     [key: number]: string;
   }>({});
   const [cardLimits, setCardLimits] = useState<{
     [key: number]: number;
   }>({});
-  const [assignments, setAssignments] = useState<CardAssignment[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCardData = async () => {
@@ -59,10 +53,8 @@ export function useCardAssignments(approvedExpenses: CardAssignment[]) {
   };
 
   const handleAmountChange = (id: number, value: string) => {
-    // Permitir valores vacíos temporalmente mientras el usuario escribe
     const numericValue = value === '' ? 0 : parseFloat(value);
 
-    // Solo actualizar si es un número válido o un campo vacío
     if (!isNaN(numericValue)) {
       setEditingAmounts(prev => ({
         ...prev,

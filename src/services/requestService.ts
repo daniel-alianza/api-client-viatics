@@ -1,7 +1,40 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-interface UserData {
+export interface UserData {
+  id: number;
+  name: string;
+  email: string;
   token: string;
-  [key: string]: any; // Added missing semicolon
+  companyId: number;
+  branchId: number;
+  areaId: number;
+  roleId: number;
+  managerId: number;
+  company: {
+    id: number;
+    name: string;
+  };
+  branch: {
+    id: number;
+    name: string;
+    companyId: number;
+  };
+  area: {
+    id: number;
+    name: string;
+    branchId: number;
+  };
+  role: {
+    id: number;
+    name: string;
+  };
+  cards: Array<{
+    id: number;
+    cardNumber: string;
+    userId: number;
+    isActive: boolean;
+    assignedAt: string;
+    limite: string;
+  }>;
 }
 
 let userData: UserData | null = null;
@@ -38,4 +71,28 @@ export const fetchUserSpecificData = async () => {
     console.error('Error fetching user-specific data:', error);
     throw error;
   }
+};
+
+export const createTravelExpense = async (data: any, token: string) => {
+  const response = await fetch('http://localhost:4000/expense-requests', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    let errorMsg = 'Error al crear la solicitud';
+    try {
+      const errorData = await response.json();
+      errorMsg = errorData.message || errorMsg;
+    } catch {
+      // Si ocurre un error al parsear el error, simplemente usa el mensaje por defecto
+    }
+    throw new Error(errorMsg);
+  }
+
+  return await response.json();
 };

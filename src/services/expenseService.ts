@@ -37,8 +37,8 @@ export const getExpenseRequests = async (): Promise<Expense[]> => {
 
     // Transformar los datos para que coincidan con la interfaz Expense
     return response.map(request => ({
-      id: request.id.toString(),
-      userId: request.userId.toString(),
+      id: request.id ? request.id.toString() : '',
+      userId: request.userId ? request.userId.toString() : '',
       requestor: request.user?.name || 'N/A',
       userName: request.user?.name || 'N/A',
       company: request.user?.company?.name || 'N/A',
@@ -46,16 +46,20 @@ export const getExpenseRequests = async (): Promise<Expense[]> => {
       area: request.user?.area?.name || 'N/A',
       departureDate: request.departureDate,
       returnDate: request.returnDate,
-      totalAmount: parseFloat(request.totalAmount.toString()) || 0,
-      amount: parseFloat(request.totalAmount.toString()) || 0, // Para compatibilidad
+      totalAmount: request.totalAmount
+        ? parseFloat(request.totalAmount.toString()) || 0
+        : 0,
+      amount: request.totalAmount
+        ? parseFloat(request.totalAmount.toString()) || 0
+        : 0, // Para compatibilidad
       status: request.status || 'Pending',
       reason: request.travelReason || 'N/A',
       objectives: request.travelObjectives || 'N/A',
       details:
         request.details?.map(detail => ({
-          id: detail.id.toString(),
+          id: detail.id ? detail.id.toString() : '',
           concept: detail.concept || 'N/A',
-          amount: parseFloat(detail.amount.toString()) || 0,
+          amount: detail.amount ? parseFloat(detail.amount.toString()) || 0 : 0,
         })) || [],
       createdAt: request.createdAt || new Date().toISOString(),
       // Mantener la estructura de expenses para compatibilidad
@@ -101,8 +105,8 @@ export const updateExpenseStatus = async (
 
     // Transformar la respuesta de la misma manera que en getExpenseRequests
     return {
-      id: response.id.toString(),
-      userId: response.userId.toString(),
+      id: response.id ? response.id.toString() : '',
+      userId: response.userId ? response.userId.toString() : '',
       requestor: response.user?.name || 'N/A',
       userName: response.user?.name || 'N/A',
       company: response.user?.company?.name || 'N/A',
@@ -110,16 +114,20 @@ export const updateExpenseStatus = async (
       area: response.user?.area?.name || 'N/A',
       departureDate: response.departureDate,
       returnDate: response.returnDate,
-      totalAmount: parseFloat(response.totalAmount.toString()) || 0,
-      amount: parseFloat(response.totalAmount.toString()) || 0,
+      totalAmount: response.totalAmount
+        ? parseFloat(response.totalAmount.toString()) || 0
+        : 0,
+      amount: response.totalAmount
+        ? parseFloat(response.totalAmount.toString()) || 0
+        : 0,
       status: response.status || 'Pending',
       reason: response.travelReason || 'N/A',
       objectives: response.travelObjectives || 'N/A',
       details:
         response.details?.map(detail => ({
-          id: detail.id.toString(),
+          id: detail.id ? detail.id.toString() : '',
           concept: detail.concept || 'N/A',
-          amount: parseFloat(detail.amount.toString()) || 0,
+          amount: detail.amount ? parseFloat(detail.amount.toString()) || 0 : 0,
         })) || [],
       createdAt: response.createdAt || new Date().toISOString(),
       expenses: {
