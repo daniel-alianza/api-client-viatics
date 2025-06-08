@@ -1,12 +1,9 @@
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { solicitudesService } from '@/services/solicitudesService';
-import { getMovements } from '@/services/extractosService';
-import {
-  getMovimientosByViatico,
-  Movimiento,
-} from '@/services/movimientosService';
 import MovimientosAccordion from './MovimientosAccordion';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getMovementsByDateRange } from '@/services/movementsService';
 
 interface User {
   id: number;
@@ -60,17 +57,35 @@ interface TravelExpense {
   diasRestantes: number | string;
   noSolicitud: string;
   sociedad: string;
+  accountCode: string;
 }
 
+// Función para mapear tarjeta a accountCode
+const getAccountCodeByCard = (cardNumber: string | undefined) => {
+  if (!cardNumber) return '';
+  // Mapea aquí tus tarjetas a accountCode
+  if (cardNumber === '5161020004515435') return '1120-015-000';
+  // Agrega más mapeos si tienes más tarjetas
+  return '';
+};
+
 export default function MainContent() {
-  const [searchTerm, setSearchTerm] = useState('');
   const [travelExpenses, setTravelExpenses] = useState<TravelExpense[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
-  const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
-  const [loadingMovimientos, setLoadingMovimientos] = useState(false);
   const [errorMovimientos, setErrorMovimientos] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const handleRowClick = (id: string) => {
+    if (selectedRowId === id) {
+      setIsAccordionOpen(false);
+      setSelectedRowId(null);
+    } else {
+      setSelectedRowId(id);
+      setIsAccordionOpen(true);
+    }
+  };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A';
@@ -84,116 +99,48 @@ export default function MainContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Obtener los datos del usuario desde localStorage
         const userData = localStorage.getItem('user');
 
         if (!userData) {
-          console.error('No se encontraron datos del usuario en localStorage');
           setLoading(false);
           return;
         }
 
         const user: User = JSON.parse(userData);
-        console.log('Datos del usuario:', user);
 
-        // Obtener viáticos
         const viaticosResponse = await solicitudesService.getViaticosPorEmail(
           user.email,
         );
-        console.log('Respuesta de viáticos:', viaticosResponse);
 
         if (viaticosResponse.status === 'success' && viaticosResponse.data) {
-          // Para cada viático, obtener la información de extractos
-          const expensesWithExtractos = await Promise.all(
-            viaticosResponse.data.map(async viatico => {
-              try {
-                // Verificar si el usuario tiene tarjetas
-                const userCard = user.cards?.[0]?.cardNumber;
-                let extractosData = {
-                  totalExtractos: '-' as string | number,
-                  faltantes: '-' as string | number,
-                  comprobados: '-' as string | number,
-                  diasRestantes: '-' as string | number,
-                };
+          const expensesWithExtractos = viaticosResponse.data.map(viatico => {
+            const userCard = user.cards?.[0]?.cardNumber;
+            const accountCode =
+              viatico.accountCode || getAccountCodeByCard(userCard);
+            return {
+              id: viatico.id.toString(),
+              fechaAutorizacion: formatDate(viatico.disbursementDate),
+              solicitante: viatico.user.email,
+              compania: viatico.user.company.name,
+              cantidadSolicitada: viatico.totalAmount,
+              tarjeta: userCard ? formatCardNumber(userCard) : '-',
+              fechaSalida: formatDate(viatico.departureDate),
+              fechaRegreso: formatDate(viatico.returnDate),
+              totalExtractos: viatico.totalExtractos ?? 0,
+              faltantes: viatico.faltantes ?? 0,
+              comprobados: viatico.comprobados ?? 0,
+              diasRestantes: viatico.daysRemaining ?? 0,
+              noSolicitud: viatico.id.toString(),
+              sociedad: viatico.user.company.name,
+              accountCode,
+            };
+          });
 
-                if (userCard) {
-                  const extractosResponse = await getMovements(
-                    formatCardNumber(userCard),
-                    viatico.departureDate,
-                    viatico.returnDate,
-                  );
-                  console.log(
-                    'Respuesta de extractos para viático',
-                    viatico.id,
-                    ':',
-                    extractosResponse,
-                  );
-
-                  if (extractosResponse?.data) {
-                    extractosData = {
-                      totalExtractos:
-                        extractosResponse.data.TotalExtractos ?? '-',
-                      faltantes:
-                        extractosResponse.data.TotalComprobacionesFaltantes ??
-                        '-',
-                      comprobados:
-                        extractosResponse.data.TotalComprobacionesRealizadas ??
-                        '-',
-                      diasRestantes:
-                        extractosResponse.data.DiasRestantesParaComprobar ??
-                        '-',
-                    };
-                  }
-                }
-
-                return {
-                  id: viatico.id.toString(),
-                  fechaAutorizacion: formatDate(viatico.disbursementDate),
-                  solicitante: viatico.user.email,
-                  compania: viatico.user.company.name,
-                  cantidadSolicitada: viatico.totalAmount,
-                  tarjeta: userCard ? formatCardNumber(userCard) : '-',
-                  fechaSalida: formatDate(viatico.departureDate),
-                  fechaRegreso: formatDate(viatico.returnDate),
-                  ...extractosData,
-                  noSolicitud: viatico.id.toString(),
-                  sociedad: viatico.user.company.name,
-                };
-              } catch (error) {
-                console.error(
-                  'Error al obtener extractos para viático',
-                  viatico.id,
-                  ':',
-                  error,
-                );
-                return {
-                  id: viatico.id.toString(),
-                  fechaAutorizacion: formatDate(viatico.disbursementDate),
-                  solicitante: viatico.user.email,
-                  compania: viatico.user.company.name,
-                  cantidadSolicitada: viatico.totalAmount,
-                  tarjeta: userCard ? formatCardNumber(userCard) : '-',
-                  fechaSalida: formatDate(viatico.departureDate),
-                  fechaRegreso: formatDate(viatico.returnDate),
-                  totalExtractos: '-',
-                  faltantes: '-',
-                  comprobados: '-',
-                  diasRestantes: '-',
-                  noSolicitud: viatico.id.toString(),
-                  sociedad: viatico.user.company.name,
-                };
-              }
-            }),
-          );
-
-          console.log('Datos procesados:', expensesWithExtractos);
           setTravelExpenses(expensesWithExtractos);
         } else {
-          console.warn('No se encontraron viáticos para el usuario');
           setTravelExpenses([]);
         }
       } catch (error) {
-        console.error('Error al cargar los datos:', error);
         setTravelExpenses([]);
       } finally {
         setLoading(false);
@@ -203,85 +150,46 @@ export default function MainContent() {
     fetchData();
   }, []);
 
-  const filteredExpenses = travelExpenses.filter(expense =>
-    expense.solicitante.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  // Hook para obtener movimientos del viático seleccionado
+  const { isLoading: loadingMovimientos, error: movimientosError } = useQuery({
+    queryKey: ['movimientos', selectedRowId],
+    queryFn: async () => {
+      if (!selectedRowId) return null;
 
-  const handleRowClick = async (id: string) => {
-    if (selectedRowId === id) {
-      // Si ya está seleccionada la misma fila, cerrar el acordeón y limpiar selección
-      setIsAccordionOpen(false);
-      setSelectedRowId(null);
-      return;
-    }
-
-    // Si es una fila diferente, cargar nuevos datos
-    setSelectedRowId(id);
-    setIsAccordionOpen(true);
-    setLoadingMovimientos(true);
-    setErrorMovimientos(null);
-
-    try {
-      // Obtener los datos del usuario desde localStorage
-      const userData = localStorage.getItem('user');
-      if (!userData) {
-        setErrorMovimientos('No se encontraron datos del usuario');
-        return;
-      }
-
-      const user: User = JSON.parse(userData);
-      const userCard = user.cards?.[0]?.cardNumber;
-
-      if (!userCard) {
-        setErrorMovimientos('No se encontró una tarjeta asociada al usuario');
-        return;
-      }
-
-      // Encontrar el viático seleccionado
-      const selectedExpense = travelExpenses.find(expense => expense.id === id);
-      if (!selectedExpense) {
-        setErrorMovimientos('No se encontró el viático seleccionado');
-        return;
-      }
-
-      const response = await getMovimientosByViatico(
-        userCard,
-        selectedExpense.fechaSalida,
-        selectedExpense.fechaRegreso,
+      const selectedExpense = travelExpenses.find(
+        expense => expense.id === selectedRowId,
       );
+      if (!selectedExpense) return null;
 
-      if (response.status === 'success' && response.data) {
-        if (response.data.length === 0) {
-          setErrorMovimientos('No hay movimientos aún para este viático');
-        } else {
-          setMovimientos(response.data);
-        }
-      } else {
-        setErrorMovimientos(
-          response.message === 'El viático no existe'
-            ? 'No hay movimientos aún para este viático'
-            : response.message || 'Error al cargar los movimientos',
-        );
-      }
-    } catch (error) {
-      console.error('Error al cargar los movimientos:', error);
-      setErrorMovimientos('Error al cargar los movimientos');
-    } finally {
-      setLoadingMovimientos(false);
+      const response = await getMovementsByDateRange({
+        accountCode: selectedExpense.accountCode,
+        cardNumber: formatCardNumber(selectedExpense.tarjeta),
+        startDate: new Date(selectedExpense.fechaSalida),
+        endDate: new Date(selectedExpense.fechaRegreso),
+      });
+
+      return response;
+    },
+    enabled: !!selectedRowId && travelExpenses.length > 0,
+    retry: false,
+  });
+
+  // Mostrar errores de la query en el estado local para mantener compatibilidad
+  useEffect(() => {
+    if (movimientosError) {
+      setErrorMovimientos(movimientosError.message);
     }
+  }, [movimientosError]);
+
+  // Nueva función para refrescar movimientos usando React Query
+  const refreshMovimientos = async () => {
+    await queryClient.invalidateQueries({
+      queryKey: ['movimientos', selectedRowId],
+    });
   };
 
   return (
     <div className='px-8 py-6'>
-      <div className='mb-4'>
-        <input
-          type='text'
-          placeholder='Buscar por nombre del solicitante...'
-          className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F34602]/50'
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-        />
-      </div>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -348,24 +256,6 @@ export default function MainContent() {
                 scope='col'
                 className='px-6 py-3 text-left text-xs font-medium uppercase tracking-wider'
               >
-                Total Extractos
-              </th>
-              <th
-                scope='col'
-                className='px-6 py-3 text-left text-xs font-medium uppercase tracking-wider'
-              >
-                Faltantes
-              </th>
-              <th
-                scope='col'
-                className='px-6 py-3 text-left text-xs font-medium uppercase tracking-wider'
-              >
-                Comprobados
-              </th>
-              <th
-                scope='col'
-                className='px-6 py-3 text-left text-xs font-medium uppercase tracking-wider'
-              >
                 Días Restantes
               </th>
             </tr>
@@ -373,21 +263,20 @@ export default function MainContent() {
           <tbody className='bg-white divide-y divide-gray-200'>
             {loading ? (
               <tr>
-                <td colSpan={12} className='px-6 py-4 text-center'>
+                <td colSpan={9} className='px-6 py-4 text-center'>
                   Cargando datos...
                 </td>
               </tr>
-            ) : filteredExpenses.length === 0 ? (
+            ) : travelExpenses.length === 0 ? (
               <tr>
-                <td colSpan={12} className='px-6 py-4 text-center'>
+                <td colSpan={9} className='px-6 py-4 text-center'>
                   Aún no hay movimientos
                 </td>
               </tr>
             ) : (
-              filteredExpenses.map(expense => (
-                <>
+              travelExpenses.map(expense => (
+                <React.Fragment key={expense.id}>
                   <tr
-                    key={expense.id}
                     onClick={() => handleRowClick(expense.id)}
                     className='hover:bg-[#F34602]/5 cursor-pointer transition-colors duration-200'
                   >
@@ -416,21 +305,12 @@ export default function MainContent() {
                       {expense.fechaRegreso}
                     </td>
                     <td className='px-6 py-4 whitespace-nowrap text-sm text-[#02082C]/80'>
-                      {expense.totalExtractos}
-                    </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#F34602]'>
-                      {expense.faltantes}
-                    </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#02082C]/80'>
-                      {expense.comprobados}
-                    </td>
-                    <td className='px-6 py-4 whitespace-nowrap text-sm text-[#02082C]/80'>
                       {expense.diasRestantes}
                     </td>
                   </tr>
                   {selectedRowId === expense.id && (
                     <tr>
-                      <td colSpan={12} className='px-6 py-4'>
+                      <td colSpan={9} className='px-6 py-4'>
                         {loadingMovimientos ? (
                           <div className='text-center py-4'>
                             <p className='text-gray-600'>
@@ -443,19 +323,23 @@ export default function MainContent() {
                           </div>
                         ) : (
                           <MovimientosAccordion
-                            movimientos={movimientos}
                             isOpen={isAccordionOpen}
                             onToggle={() =>
                               setIsAccordionOpen(!isAccordionOpen)
                             }
                             noSolicitud={expense.noSolicitud}
                             sociedad={expense.sociedad}
+                            onComprobacionExitosa={refreshMovimientos}
+                            accountCode={expense.accountCode}
+                            cardNumber={formatCardNumber(expense.tarjeta)}
+                            startDate={new Date(expense.fechaSalida)}
+                            endDate={new Date(expense.fechaRegreso)}
                           />
                         )}
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               ))
             )}
           </tbody>

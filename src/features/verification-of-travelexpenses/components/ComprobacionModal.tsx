@@ -1,26 +1,25 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 
 interface ComprobacionModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (
-    file: File,
-    tipo: string,
-    data?: {
-      responsable: string;
-      motivo: string;
-      descripcion: string;
-      importe: string;
-    },
-  ) => void;
+  onSubmit: (data: {
+    type: 'factura' | 'ticket';
+    files?: { pdf?: File; xml?: File; file?: File };
+    description?: string;
+    responsable?: string;
+    motivo?: string;
+    descripcion?: string;
+    importe?: number;
+  }) => void;
   movimiento: {
     Sequence: string;
     DueDate: string;
-    Ref: string;
     Memo: string;
-    DebAmount: number;
+    DebitAmount: number;
+    Reference: string;
   };
   noSolicitud: string;
   sociedad: string;
@@ -35,12 +34,13 @@ export default function ComprobacionModal({
   sociedad,
 }: ComprobacionModalProps) {
   const [tipo, setTipo] = useState('factura');
-  const [file, setFile] = useState<File | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [xmlFile, setXmlFile] = useState<File | null>(null);
+  const [ticketFile, setTicketFile] = useState<File | null>(null);
   const [responsable, setResponsable] = useState('');
   const [motivo, setMotivo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [importe, setImporte] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatCompanyName = (company: string) => {
     switch (company) {
@@ -55,32 +55,46 @@ export default function ComprobacionModal({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTicketChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      setTicketFile(e.target.files[0]);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (file) {
-      if (tipo === 'factura') {
-        onSubmit(file, tipo);
-      } else {
-        onSubmit(file, tipo, {
-          responsable,
-          motivo,
-          descripcion,
-          importe,
-        });
+    if (tipo === 'factura') {
+      if (!pdfFile && !xmlFile) {
+        alert('Por favor, sube al menos un archivo (PDF o XML)');
+        return;
       }
-      resetForm();
-      onClose();
+      onSubmit({
+        type: 'factura',
+        files: { pdf: pdfFile || undefined, xml: xmlFile || undefined },
+        description: descripcion,
+      });
+    } else {
+      if (!ticketFile) {
+        alert('Por favor, sube el archivo del ticket');
+        return;
+      }
+      onSubmit({
+        type: 'ticket',
+        files: { file: ticketFile },
+        responsable,
+        motivo,
+        descripcion,
+        importe: Number(importe),
+      });
     }
+    resetForm();
+    onClose();
   };
 
   const resetForm = () => {
-    setFile(null);
+    setPdfFile(null);
+    setXmlFile(null);
+    setTicketFile(null);
     setTipo('factura');
     setResponsable('');
     setMotivo('');
@@ -172,7 +186,7 @@ export default function ComprobacionModal({
             </label>
             <input
               type='text'
-              value={Number(movimiento.DebAmount).toLocaleString('es-MX', {
+              value={Number(movimiento.DebitAmount).toLocaleString('es-MX', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -186,7 +200,7 @@ export default function ComprobacionModal({
             </label>
             <input
               type='text'
-              value={movimiento.Ref}
+              value={movimiento.Reference}
               disabled
               className='w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50'
             />
@@ -208,146 +222,231 @@ export default function ComprobacionModal({
             </select>
           </div>
 
-          {tipo === 'vale' && (
-            <div className='grid grid-cols-2 gap-4'>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>
-                  Responsable
-                </label>
-                <input
-                  type='text'
-                  value={responsable}
-                  onChange={e => setResponsable(e.target.value)}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#F34602] focus:border-[#F34602]'
-                  required
-                />
+          {tipo === 'factura' ? (
+            <div>
+              <label className='block text-sm font-medium text-gray-700 mb-1'>
+                Archivos de Factura (PDF y/o XML)
+              </label>
+              <div className='mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-[#F34602] transition-colors'>
+                <div className='space-y-1 text-center'>
+                  <svg
+                    className='mx-auto h-12 w-12 text-gray-400'
+                    stroke='currentColor'
+                    fill='none'
+                    viewBox='0 0 48 48'
+                    aria-hidden='true'
+                  >
+                    <path
+                      d='M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02'
+                      strokeWidth={2}
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                    />
+                  </svg>
+                  <div className='flex text-sm text-gray-600'>
+                    <label
+                      htmlFor='file-upload'
+                      className='relative cursor-pointer bg-white rounded-md font-medium text-[#F34602] hover:text-[#d63d00] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#F34602]'
+                    >
+                      <span>Subir archivos</span>
+                      <input
+                        id='file-upload'
+                        name='file-upload'
+                        type='file'
+                        accept='.pdf,.xml'
+                        onChange={e => {
+                          if (e.target.files && e.target.files[0]) {
+                            const file = e.target.files[0];
+                            if (file.name.toLowerCase().endsWith('.pdf')) {
+                              setPdfFile(file);
+                            } else if (
+                              file.name.toLowerCase().endsWith('.xml')
+                            ) {
+                              setXmlFile(file);
+                            }
+                          }
+                        }}
+                        className='sr-only'
+                        required
+                      />
+                    </label>
+                    <p className='pl-1'>o arrastrar y soltar</p>
+                  </div>
+                  <p className='text-xs text-gray-500'>
+                    PDF y XML hasta 10MB cada uno
+                  </p>
+                </div>
               </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>
-                  Motivo
-                </label>
-                <input
-                  type='text'
-                  value={motivo}
-                  onChange={e => setMotivo(e.target.value)}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#F34602] focus:border-[#F34602]'
-                  required
-                />
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>
-                  Descripción
-                </label>
-                <input
-                  type='text'
-                  value={descripcion}
-                  onChange={e => setDescripcion(e.target.value)}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#F34602] focus:border-[#F34602]'
-                  required
-                />
-              </div>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-1'>
-                  Importe
-                </label>
-                <input
-                  type='number'
-                  value={importe}
-                  onChange={e => setImporte(e.target.value)}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#F34602] focus:border-[#F34602]'
-                  required
-                  step='0.01'
-                />
-              </div>
+              {(pdfFile || xmlFile) && (
+                <div className='mt-2 space-y-2'>
+                  {pdfFile && (
+                    <div className='flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md'>
+                      <svg
+                        className='h-5 w-5 text-[#F34602]'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+                        />
+                      </svg>
+                      <span>PDF: {pdfFile.name}</span>
+                    </div>
+                  )}
+                  {xmlFile && (
+                    <div className='flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md'>
+                      <svg
+                        className='h-5 w-5 text-[#F34602]'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+                        />
+                      </svg>
+                      <span>XML: {xmlFile.name}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+          ) : (
+            <>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 mb-1'>
+                  Archivo del Ticket
+                </label>
+                <div className='mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-[#F34602] transition-colors'>
+                  <div className='space-y-1 text-center'>
+                    <svg
+                      className='mx-auto h-12 w-12 text-gray-400'
+                      stroke='currentColor'
+                      fill='none'
+                      viewBox='0 0 48 48'
+                      aria-hidden='true'
+                    >
+                      <path
+                        d='M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02'
+                        strokeWidth={2}
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                      />
+                    </svg>
+                    <div className='flex text-sm text-gray-600'>
+                      <label
+                        htmlFor='ticket-upload'
+                        className='relative cursor-pointer bg-white rounded-md font-medium text-[#F34602] hover:text-[#d63d00] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#F34602]'
+                      >
+                        <span>Subir archivo</span>
+                        <input
+                          id='ticket-upload'
+                          name='ticket-upload'
+                          type='file'
+                          accept='.pdf,.jpg,.jpeg,.png'
+                          onChange={handleTicketChange}
+                          className='sr-only'
+                          required
+                        />
+                      </label>
+                      <p className='pl-1'>o arrastrar y soltar</p>
+                    </div>
+                    <p className='text-xs text-gray-500'>
+                      Imagen, PDF hasta 10MB
+                    </p>
+                  </div>
+                </div>
+                {ticketFile && (
+                  <div className='mt-2 flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md'>
+                    <svg
+                      className='h-5 w-5 text-[#F34602]'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
+                      />
+                    </svg>
+                    <span>{ticketFile.name}</span>
+                  </div>
+                )}
+              </div>
+              <div className='grid grid-cols-2 gap-4'>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    Responsable
+                  </label>
+                  <input
+                    type='text'
+                    value={responsable}
+                    onChange={e => setResponsable(e.target.value)}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#F34602] focus:border-[#F34602]'
+                    required
+                  />
+                </div>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    Motivo
+                  </label>
+                  <input
+                    type='text'
+                    value={motivo}
+                    onChange={e => setMotivo(e.target.value)}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#F34602] focus:border-[#F34602]'
+                    required
+                  />
+                </div>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    Descripción
+                  </label>
+                  <input
+                    type='text'
+                    value={descripcion}
+                    onChange={e => setDescripcion(e.target.value)}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#F34602] focus:border-[#F34602]'
+                    required
+                  />
+                </div>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    Importe
+                  </label>
+                  <input
+                    type='number'
+                    step='0.01'
+                    value={importe}
+                    onChange={e => setImporte(e.target.value)}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#F34602] focus:border-[#F34602]'
+                    required
+                  />
+                </div>
+              </div>
+            </>
           )}
 
-          <div>
-            <label className='block text-sm font-medium text-gray-700 mb-1'>
-              Archivo {tipo === 'factura' ? '(PDF o XML)' : '(Imagen, PDF)'}
-            </label>
-            <div className='mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-[#F34602] transition-colors'>
-              <div className='space-y-1 text-center'>
-                <svg
-                  className='mx-auto h-12 w-12 text-gray-400'
-                  stroke='currentColor'
-                  fill='none'
-                  viewBox='0 0 48 48'
-                  aria-hidden='true'
-                >
-                  <path
-                    d='M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02'
-                    strokeWidth={2}
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                  />
-                </svg>
-                <div className='flex text-sm text-gray-600'>
-                  <label
-                    htmlFor='file-upload'
-                    className='relative cursor-pointer bg-white rounded-md font-medium text-[#F34602] hover:text-[#d63d00] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#F34602]'
-                  >
-                    <span>Subir archivo</span>
-                    <input
-                      id='file-upload'
-                      name='file-upload'
-                      type='file'
-                      accept={
-                        tipo === 'factura'
-                          ? '.pdf,.xml'
-                          : '.pdf,.jpg,.jpeg,.png'
-                      }
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      className='sr-only'
-                      required
-                    />
-                  </label>
-                  <p className='pl-1'>o arrastrar y soltar</p>
-                </div>
-                <p className='text-xs text-gray-500'>
-                  {tipo === 'factura'
-                    ? 'PDF o XML hasta 10MB'
-                    : 'Imagen, PDF hasta 10MB'}
-                </p>
-              </div>
-            </div>
-            {file && (
-              <div className='mt-2 flex items-center gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-md'>
-                <svg
-                  className='h-5 w-5 text-[#F34602]'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'
-                  />
-                </svg>
-                <span>{file.name}</span>
-              </div>
-            )}
-          </div>
-
-          <div className='flex justify-end gap-2 mt-6'>
+          <div className='flex justify-end gap-4 mt-6'>
             <button
               type='button'
               onClick={onClose}
-              className='px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors'
+              className='px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors'
             >
               Cancelar
             </button>
             <button
               type='submit'
-              className='px-4 py-2 rounded-md bg-[#F34602] text-white hover:bg-[#d63d00] transition-colors'
-              disabled={
-                !file ||
-                (tipo === 'vale' &&
-                  (!responsable || !motivo || !descripcion || !importe))
-              }
+              className='px-4 py-2 text-white bg-[#F34602] rounded-md hover:bg-[#F34602]/90 transition-colors'
             >
               Guardar
             </button>

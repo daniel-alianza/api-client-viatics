@@ -18,6 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import CollaboratorRow from './CollaboratorRow';
 import EditCardModal from './EditCardModal';
 import DeleteConfirmation from './DeleteConfirmation';
@@ -97,15 +103,32 @@ export default function CollaboratorTable() {
           Colaboradores sin Tarjeta
         </h2>
         <div className='flex gap-2'>
-          <Button
-            onClick={() => setShowDownloadModal(true)}
-            variant='outline'
-            className='border-[#F34602] text-[#F34602] hover:bg-orange-50'
-            disabled={loading || filteredCollaborators.length === 0}
-          >
-            <Download className='mr-2 h-4 w-4' />
-            Descargar asignación por archivo
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Button
+                    onClick={() => setShowDownloadModal(true)}
+                    variant='outline'
+                    className='border-[#F34602] text-[#F34602] hover:bg-orange-50'
+                    disabled={
+                      loading ||
+                      filteredCollaborators.length === 0 ||
+                      selectedCompany === 'all'
+                    }
+                  >
+                    <Download className='mr-2 h-4 w-4' />
+                    Descargar asignación por archivo
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              {selectedCompany === 'all' && (
+                <TooltipContent>
+                  <p>Selecciona una empresa para descargar el archivo</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
           {/* Select de filtro por compañía */}
           <Select
             value={selectedCompany}

@@ -21,7 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { companyClientGroupMap } from '@/helpers/companyMap';
+import {
+  companyClientGroupMap,
+  normalizeCompanyName,
+  companyNameMap,
+} from '@/helpers/companyMap';
 
 interface DownloadModalProps {
   isOpen: boolean;
@@ -61,10 +65,14 @@ export default function DownloadModal({
         c => c.id.toString() === selectedCompany,
       );
       if (companyObj) {
-        const map = companyClientGroupMap[companyObj.name];
-        if (map) {
-          setClientNumber(map.cliente);
-          setGroupNumber(map.grupo);
+        const normalizedName = normalizeCompanyName(companyObj.name);
+        const exactName = companyNameMap[normalizedName];
+        if (exactName) {
+          const map = companyClientGroupMap[exactName];
+          if (map) {
+            setClientNumber(map.cliente);
+            setGroupNumber(map.grupo);
+          }
         }
       }
     } else {

@@ -9,6 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import type { ReassignmentDialogData } from '../hooks/use-card-reassignment';
+import { useEffect } from 'react';
+import {
+  companyClientGroupMap,
+  normalizeCompanyName,
+  companyNameMap,
+} from '@/helpers/companyMap';
 
 interface ReassignmentDialogProps {
   isOpen: boolean;
@@ -17,6 +23,8 @@ interface ReassignmentDialogProps {
   data: ReassignmentDialogData;
   onDataChange: (data: Partial<ReassignmentDialogData>) => void;
   isProcessing: boolean;
+  selectedCompany: string;
+  companies: { id: string; name: string }[];
 }
 
 export function ReassignmentDialog({
@@ -26,7 +34,29 @@ export function ReassignmentDialog({
   data,
   onDataChange,
   isProcessing,
+  selectedCompany,
+  companies,
 }: ReassignmentDialogProps) {
+  useEffect(() => {
+    if (selectedCompany && selectedCompany !== 'all') {
+      const companyObj = companies.find(
+        c => c.id.toString() === selectedCompany,
+      );
+      if (companyObj) {
+        const normalizedName = normalizeCompanyName(companyObj.name);
+        const exactName = companyNameMap[normalizedName];
+        if (exactName) {
+          const map = companyClientGroupMap[exactName];
+          if (map) {
+            onDataChange({ clientNumber: map.cliente, groupNumber: map.grupo });
+          }
+        }
+      }
+    } else {
+      onDataChange({ clientNumber: '', groupNumber: '' });
+    }
+  }, [selectedCompany, companies]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
@@ -46,6 +76,7 @@ export function ReassignmentDialog({
               onChange={e => onDataChange({ groupNumber: e.target.value })}
               placeholder='Ingrese el número de grupo'
               maxLength={9}
+              readOnly={selectedCompany !== 'all' && !!data.groupNumber}
             />
           </div>
           <div className='grid gap-2'>
@@ -56,6 +87,7 @@ export function ReassignmentDialog({
               onChange={e => onDataChange({ clientNumber: e.target.value })}
               placeholder='Ingrese el número de cliente'
               maxLength={10}
+              readOnly={selectedCompany !== 'all' && !!data.clientNumber}
             />
           </div>
         </div>

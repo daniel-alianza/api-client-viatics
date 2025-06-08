@@ -60,7 +60,7 @@ export function useFormUser() {
             user.companyId === parseInt(selectedCompany) &&
             user.branchId === parseInt(selectedBranch) &&
             user.areaId === parseInt(selectedArea) &&
-            [1, 3, 4].includes(user.roleId),
+            [1, 2, 3].includes(user.roleId),
         );
         setManagers(filteredManagers);
       })

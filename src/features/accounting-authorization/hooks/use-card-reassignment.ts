@@ -123,7 +123,7 @@ export function useCardReassignment() {
 
       const rows = data.map(row =>
         [
-          `="${(row.cardNumber || '').replace(/\s/g, '')}"`,
+          (row.cardNumber || '').replace(/\s/g, ''),
           limitString(row.description, 40),
           row.sign || '+',
           (row.amount || 0).toFixed(2).padStart(11, '0'),

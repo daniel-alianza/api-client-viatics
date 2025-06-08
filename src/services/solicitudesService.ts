@@ -49,6 +49,11 @@ export interface Viatico {
   comment: string | null;
   user: User;
   details: Detail[];
+  accountCode?: string;
+  totalExtractos?: number;
+  faltantes?: number;
+  comprobados?: number;
+  daysRemaining?: number;
 }
 
 export interface ViaticoResponse {

@@ -1,38 +1,34 @@
-import { apiFetch } from './api';
+import { api } from './api';
+import { InspirationQuote, QuotesResponse } from '@/interfaces/phraseInterfece';
 
-export interface InspirationQuote {
-  id: number;
-  content: string;
-  author: string;
-  createdAt: Date;
-}
+export const getInspirationQuotes = async () => {
+  const res = await api.get<QuotesResponse>('/inspiration-quotes');
+  return res.data;
+};
 
-export interface QuotesResponse {
-  success: boolean;
-  data: InspirationQuote[];
-  message: string;
-}
+export const getInspirationQuoteById = async (id: number) => {
+  const res = await api.get<{
+    success: boolean;
+    data: InspirationQuote;
+    message: string;
+  }>(`/inspiration-quotes/${id}`);
+  return res.data;
+};
 
-export const getInspirationQuotes = () =>
-  apiFetch<QuotesResponse>('/inspiration-quotes');
-
-export const getInspirationQuoteById = (id: number) =>
-  apiFetch<{ success: boolean; data: InspirationQuote; message: string }>(
+export const deleteInspirationQuote = async (id: number) => {
+  const res = await api.delete<{ success: boolean; message: string }>(
     `/inspiration-quotes/${id}`,
   );
+  return res.data;
+};
 
-export const deleteInspirationQuote = (id: number) =>
-  apiFetch<{ success: boolean; message: string }>(`/inspiration-quotes/${id}`, {
-    method: 'DELETE',
-  });
-
-export const createInspirationQuote = (
+export const createInspirationQuote = async (
   quote: Omit<InspirationQuote, 'id' | 'createdAt'>,
-) =>
-  apiFetch<{ success: boolean; data: InspirationQuote; message: string }>(
-    '/inspiration-quotes',
-    {
-      method: 'POST',
-      body: JSON.stringify(quote),
-    },
-  );
+) => {
+  const res = await api.post<{
+    success: boolean;
+    data: InspirationQuote;
+    message: string;
+  }>('/inspiration-quotes', quote);
+  return res.data;
+};

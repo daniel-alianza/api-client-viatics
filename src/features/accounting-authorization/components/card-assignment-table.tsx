@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useApprovedExpenses } from '@/features/accounting-authorization/hooks/use-approved-expenses';
 import { useCardAssignments } from '@/features/accounting-authorization/hooks/use-card-assignments';
 import { useCardReassignment } from '@/features/accounting-authorization/hooks/use-card-reassignment';
@@ -16,6 +16,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ReassignmentDialog } from './reassignment-dialog';
+import { getCompanies, Company } from '@/services/info-moduleService';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export default function CardAssignmentTable() {
   const { approvedExpenses, loading, error } = useApprovedExpenses();
@@ -31,6 +38,8 @@ export default function CardAssignmentTable() {
     [key: number]: '0' | '1' | '2' | '3';
   }>({});
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompany, setSelectedCompany] = useState<string>('all');
 
   const {
     isProcessing,
@@ -41,6 +50,12 @@ export default function CardAssignmentTable() {
     updateDialogData,
     handleDialogSubmit,
   } = useCardReassignment();
+
+  useEffect(() => {
+    getCompanies()
+      .then(setCompanies)
+      .catch(() => setCompanies([]));
+  }, []);
 
   const handleStatusChange = (id: number, value: '0' | '1' | '2' | '3') => {
     setEditingStatus(prev => ({
@@ -107,22 +122,72 @@ export default function CardAssignmentTable() {
     })}`;
   };
 
+  // Filtrar viáticos aprobados por compañía (robusto)
+  const filteredExpenses =
+    selectedCompany !== 'all'
+      ? approvedExpenses.filter(
+          e =>
+            e.companyId?.toString() === selectedCompany ||
+            e.company?.id?.toString() === selectedCompany ||
+            e.user?.companyId?.toString() === selectedCompany,
+        )
+      : approvedExpenses;
+
   return (
     <>
       <Card className='overflow-hidden shadow-lg border-none transition-all duration-200'>
         <div className='overflow-x-auto'>
           <div className='flex justify-between items-center p-4'>
-            <h1 className='text-2xl font-bold text-[#F34602]'>
-              Solicitudes de Viáticos Aprobadas
-            </h1>
-            <Button
-              onClick={handleReassignment}
-              disabled={loading || approvedExpenses.length === 0}
-              className='bg-[#F34602] text-white hover:bg-[#d13e02] flex gap-2'
-            >
-              <Download className='h-4 w-4' />
-              Descargar Reasignación
-            </Button>
+            <div className='flex gap-2 items-center'>
+              <h1 className='text-2xl font-bold text-[#F34602]'>
+                Solicitudes de Viáticos Aprobadas
+              </h1>
+              <Select
+                value={selectedCompany}
+                onValueChange={setSelectedCompany}
+                disabled={companies.length === 0}
+              >
+                <SelectTrigger className='border-[#F34602] text-[#F34602] min-w-[180px] ml-4'>
+                  <SelectValue placeholder='Filtrar por compañía' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>Todas las compañías</SelectItem>
+                  {companies.map(company => (
+                    <SelectItem key={company.id} value={company.id.toString()}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Button
+                      onClick={handleReassignment}
+                      disabled={
+                        loading ||
+                        approvedExpenses.length === 0 ||
+                        selectedCompany === 'all'
+                      }
+                      className='bg-[#F34602] text-white hover:bg-[#d13e02] flex gap-2'
+                    >
+                      <Download className='h-4 w-4' />
+                      Descargar Reasignación
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {selectedCompany === 'all' && (
+                  <TooltipContent>
+                    <p>
+                      Selecciona una empresa para descargar el archivo de
+                      reasignación
+                    </p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
           {error && (
@@ -155,8 +220,8 @@ export default function CardAssignmentTable() {
                     Cargando datos...
                   </td>
                 </tr>
-              ) : approvedExpenses.length > 0 ? (
-                approvedExpenses.map((expense, index) => (
+              ) : filteredExpenses.length > 0 ? (
+                filteredExpenses.map((expense, index) => (
                   <tr
                     key={`${expense.id}-${index}`}
                     className={`border-b border-gray-200 transition-colors duration-200 ${
@@ -263,6 +328,8 @@ export default function CardAssignmentTable() {
         data={dialogData}
         onDataChange={updateDialogData}
         isProcessing={isProcessing}
+        selectedCompany={selectedCompany}
+        companies={companies}
       />
     </>
   );
