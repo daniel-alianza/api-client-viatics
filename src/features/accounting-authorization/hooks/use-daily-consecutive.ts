@@ -7,7 +7,7 @@ export function useDailyConsecutive() {
 
   useEffect(() => {
     const today = format(new Date(), 'yyyyMMdd');
-    const stored = localStorage.getItem(storageKey);
+    const stored = sessionStorage.getItem(storageKey);
 
     if (stored) {
       const { date, count } = JSON.parse(stored);
@@ -15,14 +15,14 @@ export function useDailyConsecutive() {
         setConsecutive(count.toString().padStart(2, '0'));
       } else {
         // Si es un nuevo día, reiniciar el consecutivo
-        localStorage.setItem(
+        sessionStorage.setItem(
           storageKey,
           JSON.stringify({ date: today, count: '01' }),
         );
         setConsecutive('01');
       }
     } else {
-      localStorage.setItem(
+      sessionStorage.setItem(
         storageKey,
         JSON.stringify({ date: today, count: '01' }),
       );
@@ -34,7 +34,7 @@ export function useDailyConsecutive() {
     const currentCount = parseInt(consecutive);
     const nextCount = (currentCount + 1).toString().padStart(2, '0');
 
-    localStorage.setItem(
+    sessionStorage.setItem(
       storageKey,
       JSON.stringify({ date: today, count: nextCount }),
     );

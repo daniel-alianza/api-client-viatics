@@ -81,16 +81,8 @@ export const RegisterPage = () => {
 
   // Verificar sucursales después de seleccionar compañía
   useEffect(() => {
-    if (selectedCompany && !loadingBranches && !hasCheckedBranches) {
-      if (branches.length === 0) {
-        setErrorTitle('Verificación de Sucursales');
-        setErrorMessage(
-          'La empresa seleccionada no tiene sucursales configuradas. Por favor, contacta al departamento de sistemas para que configure las sucursales necesarias.',
-        );
-        setModalType('warning');
-        setShowErrorModal(true);
-      }
-      setHasCheckedBranches(true);
+    if (selectedCompany) {
+      setHasCheckedBranches(true); // Solo marcamos como verificado, sin mostrar aviso
     }
   }, [selectedCompany, loadingBranches, branches, hasCheckedBranches]);
 

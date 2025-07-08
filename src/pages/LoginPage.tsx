@@ -1,11 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useLogin } from '@/hooks/useLogin';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import type { UserData } from '@/services/requestService';
+import type { UserData } from '@/interfaces/requestInterface';
 
 export const LoginPage = () => {
   const {
@@ -18,7 +18,12 @@ export const LoginPage = () => {
     handleLogin,
   } = useLogin();
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { setUser, isAuthenticated } = useAuth();
+
+  // Redirigir al dashboard si el usuario ya está autenticado
+  if (isAuthenticated) {
+    return <Navigate to='/dashboard' replace />;
+  }
 
   const handleLoginWithUserData = async (e: React.FormEvent) => {
     e.preventDefault();

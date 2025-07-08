@@ -8,24 +8,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import type { ReassignmentDialogData } from '../hooks/use-card-reassignment';
-import { useEffect } from 'react';
-import {
-  companyClientGroupMap,
-  normalizeCompanyName,
-  companyNameMap,
-} from '@/helpers/companyMap';
-
-interface ReassignmentDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: () => void;
-  data: ReassignmentDialogData;
-  onDataChange: (data: Partial<ReassignmentDialogData>) => void;
-  isProcessing: boolean;
-  selectedCompany: string;
-  companies: { id: string; name: string }[];
-}
+import { ReassignmentDialogProps } from '../interfaces/DialogpropInterface';
+import { useCompanyAutoFill } from '../hooks/useCompanyAutoFill';
 
 export function ReassignmentDialog({
   isOpen,
@@ -37,25 +21,7 @@ export function ReassignmentDialog({
   selectedCompany,
   companies,
 }: ReassignmentDialogProps) {
-  useEffect(() => {
-    if (selectedCompany && selectedCompany !== 'all') {
-      const companyObj = companies.find(
-        c => c.id.toString() === selectedCompany,
-      );
-      if (companyObj) {
-        const normalizedName = normalizeCompanyName(companyObj.name);
-        const exactName = companyNameMap[normalizedName];
-        if (exactName) {
-          const map = companyClientGroupMap[exactName];
-          if (map) {
-            onDataChange({ clientNumber: map.cliente, groupNumber: map.grupo });
-          }
-        }
-      }
-    } else {
-      onDataChange({ clientNumber: '', groupNumber: '' });
-    }
-  }, [selectedCompany, companies]);
+  useCompanyAutoFill({ selectedCompany, companies, onDataChange });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

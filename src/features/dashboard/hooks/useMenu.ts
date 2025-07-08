@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { File, FileText, Sheet, CreditCard, FileCheck } from 'lucide-react';
+import {
+  File,
+  FileText,
+  Sheet,
+  CreditCard,
+  FileCheck,
+  ClipboardCheck,
+} from 'lucide-react';
 
 const ROUTE_MAPPING = {
   'new-expense': '/request/page',
@@ -9,6 +16,7 @@ const ROUTE_MAPPING = {
   'collab-w-card': '/collaborators-w-card/page',
   'expense-verification': '/travel-expense-checks/page',
   'travel-verification': '/verification-of-travel/page',
+  'accounting-clearance': '/accounting-clearance/page',
 } as const;
 
 export const useMenu = () => {
@@ -19,7 +27,7 @@ export const useMenu = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const user = localStorage.getItem('user');
+    const user = sessionStorage.getItem('user');
     if (user) {
       const parsedUser = JSON.parse(user);
       setUserRole(parsedUser.roleId);
@@ -41,13 +49,19 @@ export const useMenu = () => {
     },
     {
       id: 'accounting-auth',
-      label: 'Autorizaciones de Contabilidad',
+      label: 'Dispersión de Viaticos',
       icon: Sheet,
       color: '#F34602',
     },
     {
+      id: 'accounting-clearance',
+      label: 'Autorización Contable',
+      icon: ClipboardCheck,
+      color: '#F34602',
+    },
+    {
       id: 'collab-w-card',
-      label: 'Colaboradores Sin Asignacion a Tarjeta',
+      label: 'Asignación de Tarjeta',
       icon: CreditCard,
       color: '#F34602',
     },
@@ -72,11 +86,11 @@ export const useMenu = () => {
     verification: [
       {
         id: 'expense-verification',
-        label: 'Verificación de Gastos',
+        label: 'Comprobacion de Viaticos por Colaborador',
       },
       {
         id: 'travel-verification',
-        label: 'Verificación de Viajes',
+        label: 'Mis comprobaciones',
       },
     ],
   };

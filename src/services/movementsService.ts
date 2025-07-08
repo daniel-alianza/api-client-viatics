@@ -36,3 +36,46 @@ export const getMovementsByDateRange = async (
     throw error;
   }
 };
+
+export interface Movement {
+  id: string;
+  viaticoId: string;
+  empresa: string;
+  banco: string;
+  movimiento: string;
+  fecha: string;
+  numeroTarjeta: string;
+  gastoInicial: number;
+  descripcion: string;
+  categoria: string;
+  indicadorImpuesto: string;
+  normaReparto: string;
+}
+
+export const movementsService = {
+  getMovements: async (): Promise<Movement[]> => {
+    try {
+      const { data } = await api.get<Movement[]>('/movements');
+      return data;
+    } catch (error) {
+      console.error('Error al obtener movimientos:', error);
+      throw error;
+    }
+  },
+
+  updateMovement: async (
+    id: string,
+    movementData: Partial<Movement>,
+  ): Promise<Movement> => {
+    try {
+      const { data } = await api.patch<Movement>(
+        `/movements/${id}`,
+        movementData,
+      );
+      return data;
+    } catch (error) {
+      console.error('Error al actualizar movimiento:', error);
+      throw error;
+    }
+  },
+};

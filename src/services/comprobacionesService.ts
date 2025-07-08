@@ -4,8 +4,22 @@ import {
   UploadTicketData,
 } from '@/interfaces/comprobacionesInterface';
 
+export async function getComprobaciones(pendingSap?: boolean) {
+  try {
+    const params = pendingSap !== undefined ? { pendingSap } : {};
+    const { data } = await api.get('/comprobaciones', { params });
+    // console.log('Datos recibidos de comprobaciones:', data);
+    // data.data es el array de comprobaciones
+    return Array.isArray(data.data) ? data.data : [];
+  } catch (error) {
+    console.error('Error al obtener las comprobaciones:', error);
+    throw error;
+  }
+}
+
 export async function uploadComprobacion(
   data: UploadFacturaData | UploadTicketData,
+  userId: number,
 ) {
   const formData = new FormData();
 
@@ -16,6 +30,7 @@ export async function uploadComprobacion(
 
   formData.append('comprobacionId', comprobacionId.toString());
   formData.append('type', data.type);
+  formData.append('userId', userId.toString());
 
   if (
     'sequence' in data &&
@@ -81,10 +96,35 @@ export async function uploadComprobacion(
     const { data: response } = await api.post(
       '/comprobaciones/upload',
       formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      },
     );
     return response;
   } catch (error) {
     console.error('Error al subir la comprobación:', error);
+    throw error;
+  }
+}
+
+export async function rejectComprobacion(
+  id: string | number,
+  userId: string | number,
+  comment: string,
+) {
+  try {
+    const response = await api.patch(
+      `/comprobaciones/${id}/status?approverId=${userId}`,
+      {
+        status: 'rechazada',
+        comment,
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error al rechazar la comprobación:', error);
     throw error;
   }
 }

@@ -24,6 +24,7 @@ export function useCardAssignments(approvedExpenses: CardAssignment[]) {
     const fetchCardData = async () => {
       const newCardNumbers: CardNumberCache = {};
       const newCardLimits: { [key: number]: number } = {};
+      const newEditingSigns: { [key: number]: string } = {};
 
       for (const expense of approvedExpenses) {
         if (!cardNumbers[expense.userId]) {
@@ -33,10 +34,16 @@ export function useCardAssignments(approvedExpenses: CardAssignment[]) {
             newCardLimits[expense.userId] = card.limite;
           }
         }
+
+        // Inicializar signo por defecto si no existe
+        if (!editingSigns[expense.id]) {
+          newEditingSigns[expense.id] = '+';
+        }
       }
 
       setCardNumbers(prev => ({ ...prev, ...newCardNumbers }));
       setCardLimits(prev => ({ ...prev, ...newCardLimits }));
+      setEditingSigns(prev => ({ ...prev, ...newEditingSigns }));
     };
 
     if (approvedExpenses.length > 0) {

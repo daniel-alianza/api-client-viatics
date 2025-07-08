@@ -24,14 +24,19 @@ export const useExpenses = () => {
     }
   };
 
-  const approveExpense = async (expenseId: string, approved: boolean) => {
+  const approveExpense = async (
+    expenseId: string,
+    approved: boolean,
+    comment: string,
+  ) => {
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const user = JSON.parse(sessionStorage.getItem('user') || '{}');
       const approverId = user.id;
       const updatedExpense = await updateExpenseStatus(
         expenseId,
         approved,
         approverId,
+        comment,
       );
       setExpenses(prevExpenses =>
         prevExpenses.map(expense =>

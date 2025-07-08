@@ -33,15 +33,19 @@ const TravelExpenseFormContent = () => {
     updateExpense,
     totalExpenses,
     getFormData,
-    resetForm,
+    setExpenses,
   } = useTravelExpenseForm();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<string>('');
 
-  const hasCardNumber = user?.cards?.[0]?.cardNumber;
+  const hasCards = user?.cards && user.cards.length > 0;
 
-  const { modalState, showErrorModal, closeModal, showSuccessModal } =
-    useRequestErrorModal();
+  useEffect(() => {
+    if (user?.cards && user.cards.length > 0 && !selectedCardId) {
+      setSelectedCardId(user.cards[0].id.toString());
+    }
+  }, [user?.cards, selectedCardId]);
 
   useEffect(() => {
     if (!user) {
@@ -49,8 +53,11 @@ const TravelExpenseFormContent = () => {
     }
   }, [navigate, user]);
 
+  const { modalState, showErrorModal, closeModal, showSuccessModal } =
+    useRequestErrorModal();
+
   const validateForm = () => {
-    if (!hasCardNumber) {
+    if (!hasCards) {
       showErrorModal(
         'Error de Validación',
         'No se encontró un número de tarjeta válido. Por favor, contacte al administrador.',
@@ -148,8 +155,25 @@ const TravelExpenseFormContent = () => {
       const formData = getFormData();
       const payload = transformFormData(formData);
       await createTravelExpense(payload, user?.token ?? '');
-      resetForm();
+      setDepartureDate(undefined);
+      setReturnDate(undefined);
+      setDistributionDate(undefined);
+      setTravelReason('');
+      setTravelObjectives('');
+      setExpenses({
+        transportation: 0,
+        tolls: 0,
+        lodging: 0,
+        food: 0,
+        freight: 0,
+        tools: 0,
+        shipping: 0,
+        miscellaneous: 0,
+      });
       showSuccessModal('Éxito', 'La solicitud se ha enviado correctamente');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1200);
     } catch (error: unknown) {
       const errorMsg =
         error instanceof Error
@@ -171,13 +195,16 @@ const TravelExpenseFormContent = () => {
               Solicitud de Gastos de Viaje
             </h1>
             <form onSubmit={handleSubmit} className='space-y-8'>
-              <CompanyInfo />
+              <CompanyInfo
+                selectedCardId={selectedCardId}
+                setSelectedCardId={setSelectedCardId}
+              />
               <Separator className='my-8' />
               <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
                 <TripReason
                   travelReason={travelReason}
                   setTravelReason={setTravelReason}
-                  disabled={!hasCardNumber}
+                  disabled={!hasCards}
                 />
                 <TravelDates
                   departureDate={departureDate}
@@ -186,25 +213,25 @@ const TravelExpenseFormContent = () => {
                   setReturnDate={setReturnDate}
                   distributionDate={distributionDate}
                   setDistributionDate={setDistributionDate}
-                  disabled={!hasCardNumber}
+                  disabled={!hasCards}
                 />
               </div>
               <Separator className='my-8' />
               <EstimatedExpenses
                 totalExpenses={totalExpenses}
                 updateExpense={updateExpense}
-                disabled={!hasCardNumber}
+                disabled={!hasCards}
               />
               <Separator className='my-8' />
               <TripObjectives
                 travelObjectives={travelObjectives}
                 setTravelObjectives={setTravelObjectives}
-                disabled={!hasCardNumber}
+                disabled={!hasCards}
               />
               <div className='flex justify-end mt-12'>
                 <Button
                   type='submit'
-                  disabled={isSubmitting || !hasCardNumber}
+                  disabled={isSubmitting || !hasCards}
                   className='flex items-center gap-2 bg-[#F34602] hover:bg-[#02082C] text-white'
                 >
                   <Send className='w-4 h-4' />

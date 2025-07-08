@@ -7,6 +7,7 @@ import type {
 } from '../interfaces/card-reassignment';
 import { useDailyConsecutive } from './use-daily-consecutive';
 import { updateCardAndExpense } from '@/services/accountingService';
+import { toast } from 'sonner';
 
 export interface ReassignmentDialogData {
   groupNumber: string;
@@ -207,6 +208,11 @@ export function useCardReassignment() {
 
         // Incrementar el consecutivo después de una descarga exitosa
         incrementConsecutive();
+
+        // Mostrar mensaje de éxito
+        toast.success(
+          'Archivo de reasignación generado y descargado correctamente',
+        );
 
         // Cerrar el diálogo
         setIsDialogOpen(false);

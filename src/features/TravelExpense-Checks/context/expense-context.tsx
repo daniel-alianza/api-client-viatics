@@ -13,10 +13,8 @@ import type {
   Document,
   ApiResponse,
 } from '@/features/TravelExpense-Checks/interfaces/types';
-import {
-  solicitudesService,
-  type Viatico,
-} from '@/services/solicitudesService';
+import { solicitudesService } from '@/services/solicitudesService';
+import type { Viatico } from '@/interfaces/applicationInterface';
 
 interface UserData {
   id: number;
@@ -102,9 +100,9 @@ export const ExpenseProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
 
-  // Cargar usuario desde localStorage al montar el componente
+  // Cargar usuario desde sessionStorage al montar el componente
   useEffect(() => {
-    const storedUserData = localStorage.getItem('user');
+    const storedUserData = sessionStorage.getItem('user');
 
     if (!storedUserData) {
       setError('No se encontraron datos del usuario');
@@ -361,6 +359,7 @@ export const ExpenseProvider = ({ children }: { children: ReactNode }) => {
       formData.append('motivo', expenseData.description);
       formData.append('descripcion', expenseData.description);
       formData.append('importe', expenseData.totalToVerify.toString());
+      formData.append('userId', userData.id.toString());
 
       expenseData.files.forEach(file => {
         formData.append('files', file);

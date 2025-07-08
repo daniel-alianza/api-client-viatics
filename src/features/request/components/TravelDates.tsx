@@ -7,11 +7,11 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
-import { CalendarIcon, AlertCircle } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { format, isBefore } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useRequestErrorModal } from '@/features/request/hooks/useRequestErrorModal';
+import { toast } from 'sonner';
 
 interface TravelDatesProps {
   departureDate?: string | Date;
@@ -105,6 +105,10 @@ const TravelDates = forwardRef<HTMLDivElement, TravelDatesProps>(
       if (!departureDate || !distributionDate) return true;
       return true;
     };
+
+    if (!isDistributionDateValid()) {
+      toast.error('Por favor seleccione una fecha de distribución válida');
+    }
 
     return (
       <div ref={ref} className='space-y-6'>
@@ -210,14 +214,7 @@ const TravelDates = forwardRef<HTMLDivElement, TravelDatesProps>(
                 />
               </PopoverContent>
             </Popover>
-            {!isDistributionDateValid() && (
-              <Alert variant='destructive' className='mt-2'>
-                <AlertCircle className='h-4 w-4' />
-                <AlertDescription>
-                  Por favor seleccione una fecha de distribución válida
-                </AlertDescription>
-              </Alert>
-            )}
+            {!isDistributionDateValid() && null}
           </div>
         </div>
       </div>

@@ -18,7 +18,11 @@ interface CollaboratorContextType {
     collaborator: Partial<Collaborator>,
   ) => Promise<void>;
   removeCollaborator: (id: string) => Promise<void>;
-  assignCard: (id: string, cardNumber: string) => Promise<void>;
+  assignCard: (
+    id: string,
+    cardNumber: string,
+    companyId?: string,
+  ) => Promise<void>;
   refreshCollaborators: () => Promise<void>;
 }
 
@@ -117,13 +121,18 @@ export function CollaboratorProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const assignCard = async (id: string, cardNumber: string) => {
+  const assignCard = async (
+    id: string,
+    cardNumber: string,
+    companyId?: string,
+  ) => {
     try {
       setLoading(true);
       setError(null);
       const updatedCollaborator = await collaboratorService.assignCard(
         id,
         cardNumber,
+        companyId,
       );
       // Si el colaborador ahora tiene tarjeta, lo eliminamos de la lista
       if (updatedCollaborator.hasCard) {

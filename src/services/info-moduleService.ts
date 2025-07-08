@@ -20,3 +20,8 @@ export const getAreasByBranch = async (branchId: string) => {
   const res = await api.get<Area[]>(`/area/${branchId}`);
   return res.data;
 };
+
+export const getRoles = async () => {
+  const res = await api.get<{ id: string; name: string }[]>(`/roles`);
+  return res.data;
+};

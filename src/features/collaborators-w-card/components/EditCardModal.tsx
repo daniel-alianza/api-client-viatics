@@ -11,10 +11,20 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useCollaborators } from '@/features/collaborators-w-card/hooks/useCollaborators';
-import type { Collaborator } from '@/features/collaborators-w-card/interfaces/types';
 import { CreditCard, Loader2, AlertCircle } from 'lucide-react';
 import { collaboratorService } from '@/services/collaboratorService';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { getCompanies } from '@/services/info-moduleService';
+import type { Company } from '@/interfaces/infoInterface';
+import { toast } from 'sonner';
+import type { Collaborator } from '@/features/collaborators-w-card/interfaces/types';
+import type { Card } from '@/features/collaborators-w-card/interfaces/types';
 
 interface EditCardModalProps {
   collaborator: Collaborator;
@@ -25,60 +35,137 @@ export default function EditCardModal({
   collaborator,
   onClose,
 }: EditCardModalProps) {
-  const { refreshCollaborators } = useCollaborators();
+  const [selectedCardId, setSelectedCardId] = useState<string>('');
   const [cardNumber, setCardNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string>('');
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [cards, setCards] = useState(collaborator.cards);
 
-  // Obtener la tarjeta activa más reciente
-  const activeCard = collaborator.cards
-    .filter(card => card.isActive)
-    .sort(
-      (a, b) =>
-        new Date(b.assignedAt).getTime() - new Date(a.assignedAt).getTime(),
-    )[0];
+  // Obtener todas las tarjetas del colaborador
+  const selectedCard = cards.find(
+    (card: Card) => card.id.toString() === selectedCardId,
+  );
 
-  // Inicializar el número de tarjeta con la tarjeta actual
+  // Inicializar selección al abrir modal
   useEffect(() => {
-    if (activeCard) {
-      setCardNumber(activeCard.cardNumber);
+    if (cards.length > 0 && !selectedCardId) {
+      setSelectedCardId(cards[0].id.toString());
     }
-  }, [activeCard]);
+  }, [cards, selectedCardId]);
+
+  // Actualizar campos al cambiar tarjeta seleccionada
+  useEffect(() => {
+    if (selectedCard) {
+      setCardNumber(selectedCard.cardNumber);
+      setCompanyId(
+        (selectedCard as any).companyId?.toString() ||
+          collaborator.companyId?.toString() ||
+          '',
+      );
+    }
+  }, [selectedCardId, cards]);
+
+  useEffect(() => {
+    getCompanies()
+      .then(setCompanies)
+      .catch(() => setCompanies([]));
+  }, []);
+
+  // Helper para saber si el colaborador ya tiene una tarjeta activa con una compañía
+  const hasActiveCardInCompany = (companyId: string) => {
+    return cards.some(
+      (card: any) =>
+        card.isActive &&
+        (card.companyId?.toString() || collaborator.companyId?.toString()) ===
+          companyId,
+    );
+  };
+
+  // Helper para obtener el nombre de la compañía de una tarjeta
+  const getCompanyName = (card: any) => {
+    if (card.company && card.company.name) return card.company.name;
+    if (card.companyId && companies.length > 0) {
+      const c = companies.find(
+        c => c.id.toString() === card.companyId.toString(),
+      );
+      return c ? c.name : '';
+    }
+    if (collaborator.companyId && companies.length > 0) {
+      const c = companies.find(
+        c => c.id.toString() === collaborator.companyId?.toString(),
+      );
+      return c ? c.name : '';
+    }
+    return '';
+  };
 
   const handleSave = async () => {
-    if (!cardNumber.trim()) {
-      setError('El número de tarjeta no puede estar vacío');
+    if (!cardNumber.trim() || !companyId) {
+      setError('El número de tarjeta y la compañía no pueden estar vacíos');
       return;
     }
-
     try {
       setIsSubmitting(true);
       setError(null);
-
-      if (activeCard) {
-        // Si ya tiene una tarjeta, actualizarla
-        await collaboratorService.updateCard(activeCard.id.toString(), {
-          cardNumber: cardNumber,
-          isActive: true,
-        });
-      } else {
-        // Si no tiene tarjeta, asignar una nueva
-        await collaboratorService.assignCard(
-          collaborator.id.toString(),
-          cardNumber,
-        );
+      if (selectedCard) {
+        const originalNumber = selectedCard.cardNumber;
+        const originalCompanyId =
+          (selectedCard as any).companyId?.toString() ||
+          collaborator.companyId?.toString() ||
+          '';
+        let cambio = [];
+        if (originalNumber !== cardNumber) cambio.push('número');
+        if (originalCompanyId !== companyId) cambio.push('compañía');
+        if (cambio.length > 0) {
+          await collaboratorService.updateCard(selectedCard.id.toString(), {
+            cardNumber: cardNumber,
+            companyId: Number(companyId),
+            isActive: selectedCard.isActive,
+          });
+          // Actualizar el estado local de las tarjetas
+          const updatedCards = cards.map((card: Card) =>
+            card.id === selectedCard.id
+              ? { ...card, cardNumber, companyId: Number(companyId) }
+              : card,
+          );
+          setCards(updatedCards);
+          setCardNumber(cardNumber);
+          setCompanyId(companyId);
+          setSelectedCardId(selectedCard.id.toString());
+          toast.success(
+            `Se actualizó el ${cambio.join(' y ')} de la tarjeta con éxito.`,
+          );
+        } else {
+          toast.info('No se realizaron cambios en la tarjeta.');
+        }
       }
-
-      // Actualizar la lista de colaboradores
-      await refreshCollaborators();
-      // Cerrar el modal
-      onClose();
-    } catch (err) {
+    } catch (err: any) {
+      let mensaje = 'Error al actualizar la tarjeta';
       if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Error al actualizar la tarjeta');
+        mensaje = err.message;
+      } else if (err?.response?.data?.message) {
+        mensaje = err.response.data.message;
       }
+      // Traducción de errores comunes
+      if (mensaje.includes('property companyId should not exist')) {
+        mensaje =
+          'No se puede actualizar la compañía de la tarjeta. Contacta al administrador para habilitar esta función.';
+      }
+      if (mensaje.includes('should not exist')) {
+        mensaje =
+          'No se puede actualizar el campo solicitado. Contacta al administrador.';
+      }
+      if (
+        mensaje.includes('cardNumber') &&
+        mensaje.includes('ya está en uso')
+      ) {
+        mensaje =
+          'El número de tarjeta ya está registrado en otra compañía o usuario.';
+      }
+      setError(mensaje);
+      toast.error(mensaje);
       console.error('Error updating card:', err);
     } finally {
       setIsSubmitting(false);
@@ -91,7 +178,7 @@ export default function EditCardModal({
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2 text-[#F34602]'>
             <CreditCard className='h-5 w-5' />
-            {activeCard ? 'Editar Tarjeta' : 'Asignar Tarjeta'}
+            Editar Tarjeta
           </DialogTitle>
         </DialogHeader>
         <div className='space-y-4 py-4'>
@@ -109,15 +196,24 @@ export default function EditCardModal({
               {collaborator.name} • {collaborator.email}
             </div>
           </div>
-          {activeCard && (
-            <div className='space-y-2'>
-              <div className='font-medium'>Tarjeta Actual</div>
-              <div className='text-sm text-gray-500 flex items-center'>
-                <CreditCard className='h-4 w-4 mr-1 text-green-600' />
-                {activeCard.cardNumber}
-              </div>
-            </div>
-          )}
+          <div className='space-y-2'>
+            <Label htmlFor='cardSelect'>Seleccionar Tarjeta</Label>
+            <Select value={selectedCardId} onValueChange={setSelectedCardId}>
+              <SelectTrigger
+                id='cardSelect'
+                className='border-gray-300 focus:border-[#F34602] focus:ring-[#F34602]'
+              >
+                <SelectValue placeholder='Selecciona una tarjeta' />
+              </SelectTrigger>
+              <SelectContent>
+                {cards.map(card => (
+                  <SelectItem key={card.id} value={card.id.toString()}>
+                    {card.cardNumber} - {getCompanyName(card)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className='space-y-2'>
             <Label htmlFor='cardNumber'>Número de Tarjeta</Label>
             <Input
@@ -127,6 +223,29 @@ export default function EditCardModal({
               placeholder='Ingrese número de tarjeta'
               className='border-gray-300 focus:border-[#F34602] focus:ring-[#F34602]'
             />
+          </div>
+          <div className='space-y-2'>
+            <Label htmlFor='companySelect'>Compañía</Label>
+            <Select value={companyId} onValueChange={setCompanyId}>
+              <SelectTrigger
+                id='companySelect'
+                className='border-gray-300 focus:border-[#F34602] focus:ring-[#F34602]'
+              >
+                <SelectValue placeholder='Selecciona una compañía' />
+              </SelectTrigger>
+              <SelectContent>
+                {companies.map(company => {
+                  const yaAsignada = hasActiveCardInCompany(
+                    company.id.toString(),
+                  );
+                  return (
+                    <SelectItem key={company.id} value={company.id.toString()}>
+                      {company.name} {yaAsignada ? '(ya asignada)' : ''}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>
@@ -141,7 +260,7 @@ export default function EditCardModal({
             {isSubmitting ? (
               <Loader2 className='mr-2 h-4 w-4 animate-spin' />
             ) : null}
-            {activeCard ? 'Actualizar Tarjeta' : 'Asignar Tarjeta'}
+            Actualizar Tarjeta
           </Button>
         </DialogFooter>
       </DialogContent>

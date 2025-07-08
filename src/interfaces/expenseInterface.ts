@@ -9,6 +9,7 @@ export interface ApiExpenseRequest {
     area?: { name?: string };
   };
   departureDate: string;
+  disbursementDate: string;
   returnDate: string;
   totalAmount: number | string;
   status?: string;

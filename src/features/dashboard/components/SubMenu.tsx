@@ -14,8 +14,11 @@ interface SubOption {
 
 const subMenuOptions: Record<string, SubOption[]> = {
   verification: [
-    { id: 'expense-verification', label: 'Verificación de Gastos' },
-    { id: 'travel-verification', label: 'Verificación de Viajes' },
+    {
+      id: 'expense-verification',
+      label: 'Comprobacion de Viaticos por Colaborador',
+    },
+    { id: 'travel-verification', label: 'Mis comprobaciones' },
   ],
 };
 

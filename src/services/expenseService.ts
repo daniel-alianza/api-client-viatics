@@ -21,6 +21,7 @@ export const getExpenseRequests = async (): Promise<Expense[]> => {
       branch: request.user?.branch?.name || 'N/A',
       area: request.user?.area?.name || 'N/A',
       departureDate: request.departureDate,
+      disbursementDate: request.disbursementDate,
       returnDate: request.returnDate,
       totalAmount: request.totalAmount
         ? parseFloat(request.totalAmount.toString()) || 0
@@ -62,6 +63,7 @@ export const updateExpenseStatus = async (
   expenseId: string,
   approved: boolean,
   approverId: string,
+  comment: string,
 ): Promise<Expense> => {
   try {
     const endpoint = approved
@@ -72,7 +74,7 @@ export const updateExpenseStatus = async (
           expenseId,
         )}?approverId=${approverId}`;
 
-    const response = await api.post<ApiExpenseRequest>(endpoint);
+    const response = await api.post<ApiExpenseRequest>(endpoint, { comment });
 
     const request = response.data;
 

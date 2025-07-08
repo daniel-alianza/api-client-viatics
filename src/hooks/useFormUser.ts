@@ -4,11 +4,8 @@ import {
   getBranchesByCompany,
   getAreasByBranch,
   getAllUsers,
-  Company,
-  Branch,
-  Area,
-  User,
 } from '@/services/info-moduleService';
+import type { Company, Branch, Area, User } from '@/interfaces/infoInterface';
 
 export function useFormUser() {
   const [companies, setCompanies] = useState<Company[]>([]);

@@ -6,10 +6,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { motion } from 'framer-motion';
-
-interface ExpenseFilterProps {
-  onFilterChange: (value: string) => void;
-}
+import { ExpenseFilterProps } from '../interfaces/expensefilterInterface';
 
 export function ExpenseFilter({ onFilterChange }: ExpenseFilterProps) {
   return (

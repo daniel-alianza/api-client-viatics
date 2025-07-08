@@ -1,3 +1,5 @@
+import { Variants } from 'framer-motion';
+
 export type ExpenseStatus =
   | 'Pending'
   | 'Approved'
@@ -40,4 +42,27 @@ export interface Expense {
   objectives: string;
   details: ExpenseDetail[];
   createdAt: string;
+}
+
+export interface TripPurposeProps {
+  expense: Expense;
+}
+
+export interface ApplicantInfoProps {
+  expense: Expense;
+  variants: Variants;
+}
+
+export interface TripInfoProps {
+  expense: Expense;
+  tripDuration: number;
+}
+
+export interface ExpenseDetail {
+  concept: string;
+  amount: number;
+}
+
+export interface FinancialInfoProps {
+  expense: Expense;
 }

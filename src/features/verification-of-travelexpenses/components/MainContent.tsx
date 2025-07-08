@@ -74,7 +74,6 @@ export default function MainContent() {
   const [loading, setLoading] = useState(true);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
-  const [errorMovimientos, setErrorMovimientos] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const handleRowClick = (id: string) => {
@@ -99,7 +98,7 @@ export default function MainContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userData = localStorage.getItem('user');
+        const userData = sessionStorage.getItem('user');
 
         if (!userData) {
           setLoading(false);
@@ -151,7 +150,11 @@ export default function MainContent() {
   }, []);
 
   // Hook para obtener movimientos del viático seleccionado
-  const { isLoading: loadingMovimientos, error: movimientosError } = useQuery({
+  const {
+    data: movimientosData,
+    isLoading: loadingMovimientos,
+    error: movimientosError,
+  } = useQuery({
     queryKey: ['movimientos', selectedRowId],
     queryFn: async () => {
       if (!selectedRowId) return null;
@@ -173,13 +176,6 @@ export default function MainContent() {
     enabled: !!selectedRowId && travelExpenses.length > 0,
     retry: false,
   });
-
-  // Mostrar errores de la query en el estado local para mantener compatibilidad
-  useEffect(() => {
-    if (movimientosError) {
-      setErrorMovimientos(movimientosError.message);
-    }
-  }, [movimientosError]);
 
   // Nueva función para refrescar movimientos usando React Query
   const refreshMovimientos = async () => {
@@ -317,9 +313,11 @@ export default function MainContent() {
                               Cargando movimientos...
                             </p>
                           </div>
-                        ) : errorMovimientos ? (
+                        ) : movimientosError ? (
                           <div className='text-center py-4'>
-                            <p className='text-red-600'>{errorMovimientos}</p>
+                            <p className='text-red-600'>
+                              Error al cargar los movimientos
+                            </p>
                           </div>
                         ) : (
                           <MovimientosAccordion
@@ -330,10 +328,13 @@ export default function MainContent() {
                             noSolicitud={expense.noSolicitud}
                             sociedad={expense.sociedad}
                             onComprobacionExitosa={refreshMovimientos}
-                            accountCode={expense.accountCode}
-                            cardNumber={formatCardNumber(expense.tarjeta)}
-                            startDate={new Date(expense.fechaSalida)}
-                            endDate={new Date(expense.fechaRegreso)}
+                            movimientos={movimientosData?.data?.value || []}
+                            isLoading={loadingMovimientos}
+                            error={
+                              movimientosError
+                                ? 'Error al cargar los movimientos'
+                                : null
+                            }
                           />
                         )}
                       </td>

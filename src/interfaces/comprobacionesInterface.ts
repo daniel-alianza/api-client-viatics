@@ -25,3 +25,21 @@ export interface UploadTicketData {
   debitAmount?: number;
   memo?: string;
 }
+
+export interface Comprobacion {
+  id: number;
+  type: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  description?: string;
+  responsable?: string;
+  motivo?: string;
+  importe?: number;
+  sequence?: number;
+  AccountName?: string;
+  DebitAmount?: number;
+  DueDate?: string;
+  Reference?: string;
+  Memo?: string;
+}

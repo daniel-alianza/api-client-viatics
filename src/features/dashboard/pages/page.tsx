@@ -1,26 +1,68 @@
 import { useMenu } from '@/features/dashboard/hooks/useMenu';
 import MainContent from '@/features/dashboard/components/MainContent';
 import { DetailPanel } from '@/features/dashboard/components/ui/DetailPanel';
-import { Search, Bell } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { LogOut, Settings } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
 
 export default function Home() {
-  const {
-    selectedOption,
-    searchFocused,
-    setSearchFocused,
-    handleSubOptionClick,
-    closePanel,
-  } = useMenu();
+  const { selectedOption, handleSubOptionClick, closePanel } = useMenu();
+
+  const { setUser, user } = useAuth();
+  const navigate = useNavigate();
+
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const handleLogout = () => {
+    setUser(null);
+    navigate('/login');
+  };
+
+  // Solo mostrar el icono de settings si es admin
+  const isAdmin =
+    user && (user.roleId === 1 || user.email === 'admin@alianzaelectrica.com');
+
+  const handleSettingsClick = () => {
+    setShowDropdown(prev => !prev);
+  };
+
+  const handleGestionarUsuarios = () => {
+    setShowDropdown(false);
+    navigate('/user-management/page');
+  };
+
+  const handleGestionarPermisos = () => {
+    setShowDropdown(false);
+    navigate('/permissions/page');
+  };
+
+  // Cerrar el dropdown si se hace clic fuera
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    }
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
 
   return (
-    <div className='min-h-screen bg-white overflow-hidden'>
-      {/* Decorative background elements */}
-      <div className='fixed top-0 right-0 w-[600px] h-[600px] bg-[#F34602]/5 rounded-full -mr-[300px] -mt-[300px] blur-3xl' />
-      <div className='fixed bottom-0 left-0 w-[400px] h-[400px] bg-[#02082C]/5 rounded-full -ml-[200px] -mb-[200px] blur-3xl' />
-
+    <div className='min-h-screen bg-white'>
       {/* Header */}
-      <header className='relative z-10 px-8 py-6 flex justify-between items-center bg-white shadow-sm'>
+      <header className='px-8 py-6 flex justify-between items-center bg-white shadow-sm'>
         <div className='flex items-center'>
           <div className='relative w-12 h-12'>
             <div className='absolute inset-0  rounded-lg rotate-45 transform origin-center shadow-lg' />
@@ -39,46 +81,57 @@ export default function Home() {
         </div>
 
         <div className='flex items-center space-x-6'>
-          <motion.div
-            className={`relative flex items-center ${
-              searchFocused ? 'w-64' : 'w-40'
-            }`}
-            animate={{ width: searchFocused ? 250 : 160 }}
-            transition={{
-              duration: 0.3,
-              type: 'spring',
-              stiffness: 300,
-              damping: 25,
-            }}
-          >
-            <input
-              type='text'
-              placeholder='Search...'
-              className='w-full pl-10 pr-4 py-2 rounded-full bg-white border border-gray-200 shadow-sm focus:ring-2 focus:ring-[#F34602]/20 focus:border-[#F34602] outline-none transition-all duration-300'
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-            />
-            <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400' />
-          </motion.div>
-
-          <motion.div
-            className='relative'
+          {isAdmin && (
+            <div className='relative' ref={dropdownRef}>
+              <motion.button
+                className='flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 text-[#02082C] hover:bg-gray-300 transition-colors focus:outline-none cursor-pointer'
+                onClick={handleSettingsClick}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label='Configuración'
+              >
+                <Settings className='w-6 h-6' />
+              </motion.button>
+              <AnimatePresence>
+                {showDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className='absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-[999]'
+                  >
+                    <div className='flex flex-col'>
+                      <button
+                        className='w-full text-left px-6 py-3 hover:bg-gray-100 text-sm rounded-t-lg cursor-pointer'
+                        onClick={() => {
+                          handleGestionarPermisos();
+                        }}
+                      >
+                        Gestionar permisos
+                      </button>
+                      <div className='border-t border-gray-100'></div>
+                      <button
+                        className='w-full text-left px-6 py-3 hover:bg-gray-100 text-sm rounded-b-lg cursor-pointer'
+                        onClick={handleGestionarUsuarios}
+                      >
+                        Gestionar usuarios
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+          <motion.button
+            className='flex items-center space-x-2 px-4 py-2 rounded-lg bg-[#F34602] text-white hover:bg-[#F34602]/90 transition-colors'
+            onClick={handleLogout}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <button className='relative w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:shadow-lg transition-shadow duration-300'>
-              <Bell className='w-5 h-5 text-[#02082C]' />
-              <span className='absolute top-0 right-0 w-3 h-3 bg-[#F34602] rounded-full border-2 border-white pulse'></span>
-            </button>
-          </motion.div>
-
-          <motion.div
-            className='w-10 h-10 rounded-full bg-[#02082C] flex items-center justify-center shadow-md hover:shadow-lg cursor-pointer'
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span className='text-white font-medium text-sm'>JD</span>
-          </motion.div>
+            <LogOut className='w-5 h-5' />
+            <span>Cerrar Sesión</span>
+          </motion.button>
         </div>
       </header>
 

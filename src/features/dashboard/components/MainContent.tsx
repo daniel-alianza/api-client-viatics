@@ -19,8 +19,8 @@ export default function MainContent() {
 
   const { randomQuote } = useDailyQuote();
 
-  // Obtener el nombre del usuario del localStorage
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  // Obtener el nombre del usuario del sessionStorage
+  const user = JSON.parse(sessionStorage.getItem('user') || '{}');
   const userName = user.name || 'Usuario';
 
   return (

@@ -8,6 +8,11 @@ import CollaboratorsWCardPage from '../features/collaborators-w-card/pages/page'
 import AccountingAuthorizationPage from '../features/accounting-authorization/pages';
 import VerificationOfTravelPage from '../features/verification-of-travelexpenses/pages/page';
 import { ExpenseVerificationPage } from '../features/TravelExpense-Checks/pages/expense-verification-page';
+import { ProtectedRoute } from '../components/ProtectedRoute';
+import AccountingClearancePage from '../features/accounting-clearance/pages/page';
+import { MovimientosLayout } from '../features/accounting-clearance/pages/MovimientosLayout';
+import UserManagement from '../features/user-management/pages/UserManagement';
+import PermissionsPage from '../features/permissions/pages/page';
 
 export const AppRoutes = () => {
   return (
@@ -15,28 +20,103 @@ export const AppRoutes = () => {
       <Route path='/' element={<Navigate to='/login' />} />
       <Route path='/login' element={<LoginPage />} />
       <Route path='/register' element={<RegisterPage />} />
-      <Route path='/dashboard' element={<Dash />} />
-      <Route path='/request/page' element={<RequestPage />} />
-      <Route path='/authorization/page' element={<AuthorizationPage />} />
+
+      {/* Rutas protegidas */}
+      <Route
+        path='/dashboard'
+        element={
+          <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+            <Dash />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path='/request/page'
+        element={
+          <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+            <RequestPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path='/authorization/page'
+        element={
+          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+            <AuthorizationPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path='/collaborators-w-card/page'
-        element={<CollaboratorsWCardPage />}
+        element={
+          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+            <CollaboratorsWCardPage />
+          </ProtectedRoute>
+        }
       />
       <Route
         path='/accounting-authorization/page'
-        element={<AccountingAuthorizationPage />}
+        element={
+          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+            <AccountingAuthorizationPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path='/accounting-clearance/page'
+        element={
+          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+            <AccountingClearancePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path='/accounting-clearance/movimientos/:id'
+        element={
+          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+            <MovimientosLayout />
+          </ProtectedRoute>
+        }
       />
       <Route
         path='/verification-of-travel/page'
-        element={<VerificationOfTravelPage />}
+        element={
+          <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+            <VerificationOfTravelPage />
+          </ProtectedRoute>
+        }
       />
       <Route
         path='/expense-verification/page'
-        element={<ExpenseVerificationPage />}
+        element={
+          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+            <ExpenseVerificationPage />
+          </ProtectedRoute>
+        }
       />
       <Route
         path='/travel-expense-checks/page'
-        element={<ExpenseVerificationPage />}
+        element={
+          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+            <ExpenseVerificationPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path='/user-management/page'
+        element={
+          <ProtectedRoute allowedRoles={[1]}>
+            <UserManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path='/permissions/page'
+        element={
+          <ProtectedRoute allowedRoles={[1]}>
+            <PermissionsPage />
+          </ProtectedRoute>
+        }
       />
     </Routes>
   );

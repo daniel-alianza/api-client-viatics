@@ -41,7 +41,7 @@ export default function ExpenseDashboard() {
               className='mb-8 rounded-lg bg-gradient-to-r from-[#F34602] to-[#F34602]/80 p-6 shadow-lg hover:shadow-xl transition-shadow duration-300'
             >
               <h2 className='mb-4 text-2xl font-bold text-white'>
-                Travel Expense Requests
+                Solicitudes de gastos de viaje
               </h2>
               <div className='grid gap-4 md:grid-cols-2'>
                 <ExpenseSearch onSearch={setSearchQuery} />

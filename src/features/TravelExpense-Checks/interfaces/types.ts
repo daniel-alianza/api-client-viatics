@@ -83,3 +83,23 @@ export interface ApiResponse<T> {
   error?: string;
   timestamp: string;
 }
+
+export interface DocumentDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  isRejecting: boolean;
+  selectedComprobacion: number | null;
+  comment: string;
+  documents: Document[];
+  previewUrl: string | null;
+  showXmlInfo: boolean;
+  isLoadingXmlInfo: boolean;
+  xmlInfo: any;
+  isPdfFile: boolean;
+  onPreviewDocument: (documentId: number, fileName?: string) => void;
+  onClosePreview: () => void;
+  onCommentChange: (comment: string) => void;
+  onSetRejecting: (isRejecting: boolean) => void;
+  onApprove: (comprobacionId: number) => void;
+  onReject: (comprobacionId: number) => void;
+}
