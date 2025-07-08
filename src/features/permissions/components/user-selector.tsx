@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useUserContext } from '../context/user-context';
-import { User } from 'lucide-react';
+import { User, X } from 'lucide-react';
 
 export function UserSelector() {
   const { users, selectedUser, setSelectedUser } = useUserContext();
@@ -21,8 +21,19 @@ export function UserSelector() {
     }
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role.toLowerCase()) {
+  const handleClearSelection = () => {
+    setSelectedUser(null);
+  };
+
+  const getRoleColor = (role: any) => {
+    let roleStr = role;
+    if (typeof role === 'object' && role !== null && 'name' in role) {
+      roleStr = role.name;
+    }
+    if (typeof roleStr !== 'string') {
+      roleStr = 'desconocido';
+    }
+    switch (roleStr.toLowerCase()) {
       case 'admin':
         return 'text-white';
       case 'manager':
@@ -36,8 +47,15 @@ export function UserSelector() {
     }
   };
 
-  const getRoleBgColor = (role: string) => {
-    switch (role.toLowerCase()) {
+  const getRoleBgColor = (role: any) => {
+    let roleStr = role;
+    if (typeof role === 'object' && role !== null && 'name' in role) {
+      roleStr = role.name;
+    }
+    if (typeof roleStr !== 'string') {
+      roleStr = 'desconocido';
+    }
+    switch (roleStr.toLowerCase()) {
       case 'admin':
         return { backgroundColor: '#02082C' };
       case 'manager':
@@ -50,6 +68,15 @@ export function UserSelector() {
         return {};
     }
   };
+
+  function isRoleObject(role: any): role is { name: string } {
+    return (
+      typeof role === 'object' &&
+      role !== null &&
+      'name' in role &&
+      typeof role.name === 'string'
+    );
+  }
 
   return (
     <Card className='mb-6 bg-white/70 backdrop-blur-sm border-gray-200/50 shadow-lg'>
@@ -80,23 +107,33 @@ export function UserSelector() {
                     <div className='flex items-center space-x-3'>
                       <Avatar className='w-6 h-6'>
                         <AvatarFallback className='text-xs bg-gray-100 text-gray-700'>
-                          {user.name
-                            .split(' ')
-                            .map(n => n[0])
-                            .join('')}
+                          {typeof user.name === 'string'
+                            ? user.name
+                                .split(' ')
+                                .map(n => n[0])
+                                .join('')
+                            : 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div className='flex flex-col'>
-                        <span className='font-medium'>{user.name}</span>
+                        <span className='font-medium'>
+                          {typeof user.name === 'string'
+                            ? user.name
+                            : 'Sin nombre'}
+                        </span>
                         <span className='text-xs text-gray-500'>
-                          {user.email}
+                          {typeof user.email === 'string' ? user.email : ''}
                         </span>
                       </div>
                       <Badge
                         className={getRoleColor(user.role)}
                         style={getRoleBgColor(user.role)}
                       >
-                        {user.role}
+                        {isRoleObject(user.role)
+                          ? user.role.name
+                          : typeof user.role === 'string'
+                          ? user.role
+                          : 'Desconocido'}
                       </Badge>
                     </div>
                   </SelectItem>
@@ -111,16 +148,35 @@ export function UserSelector() {
                 <AvatarFallback
                   style={{ backgroundColor: '#F34602', color: 'white' }}
                 >
-                  {selectedUser.name
-                    .split(' ')
-                    .map(n => n[0])
-                    .join('')}
+                  {typeof selectedUser.name === 'string'
+                    ? selectedUser.name
+                        .split(' ')
+                        .map(n => n[0])
+                        .join('')
+                    : 'U'}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className='text-gray-800 font-medium'>{selectedUser.name}</p>
-                <p className='text-gray-600 text-sm'>{selectedUser.role}</p>
+                <p className='text-gray-800 font-medium'>
+                  {typeof selectedUser.name === 'string'
+                    ? selectedUser.name
+                    : 'Sin nombre'}
+                </p>
+                <p className='text-gray-600 text-sm'>
+                  {isRoleObject(selectedUser.role)
+                    ? selectedUser.role.name
+                    : typeof selectedUser.role === 'string'
+                    ? selectedUser.role
+                    : 'Desconocido'}
+                </p>
               </div>
+              <button
+                onClick={handleClearSelection}
+                className='ml-2 p-1 rounded hover:bg-gray-200 transition-colors'
+                title='Quitar selección'
+              >
+                <X className='w-4 h-4 text-gray-500' />
+              </button>
             </div>
           )}
         </div>

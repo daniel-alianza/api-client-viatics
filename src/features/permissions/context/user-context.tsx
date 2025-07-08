@@ -1,43 +1,12 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from 'react';
 import type { User } from '../interfaces/types';
-
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'John Smith',
-    email: 'john.smith@company.com',
-    role: 'Admin',
-    avatar: '/placeholder.svg?height=40&width=40',
-  },
-  {
-    id: '2',
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@company.com',
-    role: 'Manager',
-    avatar: '/placeholder.svg?height=40&width=40',
-  },
-  {
-    id: '3',
-    name: 'Mike Chen',
-    email: 'mike.chen@company.com',
-    role: 'Developer',
-    avatar: '/placeholder.svg?height=40&width=40',
-  },
-  {
-    id: '4',
-    name: 'Emily Davis',
-    email: 'emily.davis@company.com',
-    role: 'Analyst',
-    avatar: '/placeholder.svg?height=40&width=40',
-  },
-  {
-    id: '5',
-    name: 'Alex Rodriguez',
-    email: 'alex.rodriguez@company.com',
-    role: 'Developer',
-    avatar: '/placeholder.svg?height=40&width=40',
-  },
-];
+import { api } from '@/services/api';
 
 interface UserContextType {
   users: User[];
@@ -49,11 +18,16 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    api.get('/users').then(res => {
+      setUsers(res.data);
+    });
+  }, []);
 
   return (
-    <UserContext.Provider
-      value={{ users: mockUsers, selectedUser, setSelectedUser }}
-    >
+    <UserContext.Provider value={{ users, selectedUser, setSelectedUser }}>
       {children}
     </UserContext.Provider>
   );

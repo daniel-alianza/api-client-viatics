@@ -71,7 +71,7 @@ export const DetailPanel = ({
                         className='w-7 h-7'
                         style={{ color: selected?.color || '#F34602' }}
                       >
-                        {selected.icon}
+                        <selected.icon />
                       </div>
                     )}
                   </div>

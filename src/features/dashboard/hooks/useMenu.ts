@@ -1,19 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  File,
-  FileText,
-  Sheet,
-  CreditCard,
-  FileCheck,
-  ClipboardCheck,
-} from 'lucide-react';
+import { api } from '@/services/api';
+import { useAuth } from '@/context/AuthContext';
+import { menuOptions, subMenuOptions } from '@/lib/menuOptions';
 
 const ROUTE_MAPPING = {
   'new-expense': '/request/page',
-  'accounting-auth': '/accounting-authorization/page',
+  'accounting-authorization': '/accounting-authorization/page',
   'travel-request': '/authorization/page',
-  'collab-w-card': '/collaborators-w-card/page',
+  'collaborators-w-card': '/collaborators-w-card/page',
   'expense-verification': '/travel-expense-checks/page',
   'travel-verification': '/verification-of-travel/page',
   'accounting-clearance': '/accounting-clearance/page',
@@ -24,76 +19,41 @@ export const useMenu = () => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [searchFocused, setSearchFocused] = useState(false);
   const [userRole, setUserRole] = useState<number | null>(null);
+  const [permisos, setPermisos] = useState<string[]>([]);
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const user = sessionStorage.getItem('user');
-    if (user) {
-      const parsedUser = JSON.parse(user);
-      setUserRole(parsedUser.roleId);
-    }
-  }, []);
-
-  const menuOptions = [
-    {
-      id: 'new-expense',
-      label: 'Crear Solicitud',
-      icon: File,
-      color: '#F34602',
-    },
-    {
-      id: 'travel-request',
-      label: 'Solicitudes de Viaticos',
-      icon: FileText,
-      color: '#F34602',
-    },
-    {
-      id: 'accounting-auth',
-      label: 'Dispersión de Viaticos',
-      icon: Sheet,
-      color: '#F34602',
-    },
-    {
-      id: 'accounting-clearance',
-      label: 'Autorización Contable',
-      icon: ClipboardCheck,
-      color: '#F34602',
-    },
-    {
-      id: 'collab-w-card',
-      label: 'Asignación de Tarjeta',
-      icon: CreditCard,
-      color: '#F34602',
-    },
-    {
-      id: 'verification',
-      label: 'Comprobaciones de Viaticos',
-      icon: FileCheck,
-      color: '#F34602',
-    },
+  // Permisos predeterminados
+  const PERMISOS_PREDETERMINADOS = [
+    'new-expense', // Crear Solicitud
+    'verification', // Comprobaciones (menú principal)
   ];
 
-  // Filtrar las opciones del menú según el rol del usuario
-  const filteredMenuOptions = menuOptions.filter(option => {
-    if (userRole === 4) {
-      // Si es colaborador
-      return ['new-expense', 'verification'].includes(option.id);
+  useEffect(() => {
+    if (user) {
+      setUserRole(user.roleId);
+      // Si es admin, no filtrar nada
+      if (user.email === 'admin@alianzaelectrica.com' || user.roleId === 1) {
+        setPermisos(menuOptions.map(opt => opt.id));
+      } else {
+        // Consultar permisos del backend
+        api
+          .get(`/permissions/user/${user.id}`)
+          .then(res => {
+            const permisosBD = res.data.map((p: any) => p.viewName);
+            setPermisos([...PERMISOS_PREDETERMINADOS, ...permisosBD]);
+          })
+          .catch(() => {
+            setPermisos(PERMISOS_PREDETERMINADOS);
+          });
+      }
     }
-    return true; // Para otros roles, mostrar todas las opciones
-  });
+  }, [user]);
 
-  const subMenuOptions = {
-    verification: [
-      {
-        id: 'expense-verification',
-        label: 'Comprobacion de Viaticos por Colaborador',
-      },
-      {
-        id: 'travel-verification',
-        label: 'Mis comprobaciones',
-      },
-    ],
-  };
+  // Filtrar las opciones del menú según los permisos
+  const filteredMenuOptions = menuOptions.filter(option =>
+    permisos.includes(option.id),
+  );
 
   const handleMenuHover = (menuId: string) => setActiveMenu(menuId);
   const handleMenuLeave = () => setActiveMenu(null);

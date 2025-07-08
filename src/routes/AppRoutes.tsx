@@ -33,7 +33,10 @@ export const AppRoutes = () => {
       <Route
         path='/request/page'
         element={
-          <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+          <ProtectedRoute
+            allowedRoles={[1, 2, 3, 4]}
+            requiredPermission='request'
+          >
             <RequestPage />
           </ProtectedRoute>
         }
@@ -41,7 +44,10 @@ export const AppRoutes = () => {
       <Route
         path='/authorization/page'
         element={
-          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+          <ProtectedRoute
+            allowedRoles={[1, 2, 3, 4]}
+            requiredPermission='authorization'
+          >
             <AuthorizationPage />
           </ProtectedRoute>
         }
@@ -49,7 +55,10 @@ export const AppRoutes = () => {
       <Route
         path='/collaborators-w-card/page'
         element={
-          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+          <ProtectedRoute
+            allowedRoles={[1, 2, 3, 4]}
+            requiredPermission='collaborators-w-card'
+          >
             <CollaboratorsWCardPage />
           </ProtectedRoute>
         }
@@ -57,7 +66,10 @@ export const AppRoutes = () => {
       <Route
         path='/accounting-authorization/page'
         element={
-          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+          <ProtectedRoute
+            allowedRoles={[1, 2, 3, 4]}
+            requiredPermission='accounting-authorization'
+          >
             <AccountingAuthorizationPage />
           </ProtectedRoute>
         }
@@ -65,7 +77,10 @@ export const AppRoutes = () => {
       <Route
         path='/accounting-clearance/page'
         element={
-          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+          <ProtectedRoute
+            allowedRoles={[1, 2, 3, 4]}
+            requiredPermission='accounting-clearance'
+          >
             <AccountingClearancePage />
           </ProtectedRoute>
         }
@@ -73,7 +88,7 @@ export const AppRoutes = () => {
       <Route
         path='/accounting-clearance/movimientos/:id'
         element={
-          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+          <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
             <MovimientosLayout />
           </ProtectedRoute>
         }
@@ -81,7 +96,10 @@ export const AppRoutes = () => {
       <Route
         path='/verification-of-travel/page'
         element={
-          <ProtectedRoute allowedRoles={[1, 2, 3, 4]}>
+          <ProtectedRoute
+            allowedRoles={[1, 2, 3, 4]}
+            requiredPermission='verification-of-travelexpenses'
+          >
             <VerificationOfTravelPage />
           </ProtectedRoute>
         }
@@ -89,7 +107,10 @@ export const AppRoutes = () => {
       <Route
         path='/expense-verification/page'
         element={
-          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+          <ProtectedRoute
+            allowedRoles={[1, 2, 3, 4]}
+            requiredPermission='TravelExpense-Checks'
+          >
             <ExpenseVerificationPage />
           </ProtectedRoute>
         }
@@ -97,7 +118,10 @@ export const AppRoutes = () => {
       <Route
         path='/travel-expense-checks/page'
         element={
-          <ProtectedRoute allowedRoles={[1, 2, 3]}>
+          <ProtectedRoute
+            allowedRoles={[1, 2, 3, 4]}
+            requiredPermission='TravelExpense-Checks'
+          >
             <ExpenseVerificationPage />
           </ProtectedRoute>
         }
@@ -105,7 +129,10 @@ export const AppRoutes = () => {
       <Route
         path='/user-management/page'
         element={
-          <ProtectedRoute allowedRoles={[1]}>
+          <ProtectedRoute
+            allowedRoles={[1, 2, 3, 4]}
+            requiredPermission='user-management'
+          >
             <UserManagement />
           </ProtectedRoute>
         }
@@ -113,7 +140,10 @@ export const AppRoutes = () => {
       <Route
         path='/permissions/page'
         element={
-          <ProtectedRoute allowedRoles={[1]}>
+          <ProtectedRoute
+            allowedRoles={[1, 2, 3, 4]}
+            requiredPermission='permissions'
+          >
             <PermissionsPage />
           </ProtectedRoute>
         }

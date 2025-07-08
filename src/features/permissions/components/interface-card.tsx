@@ -9,15 +9,23 @@ import type { Interface } from '../interfaces/types';
 interface InterfaceCardProps {
   interface: Interface;
   onTogglePermission: (id: string, hasAccess: boolean) => void;
+  PERMISOS_PREDETERMINADOS?: string[];
 }
 
 export function InterfaceCard({
   interface: interface_item,
   onTogglePermission,
+  PERMISOS_PREDETERMINADOS = [
+    'dashboard',
+    'crear-solicitud',
+    'comprobar-solicitud',
+  ],
 }: InterfaceCardProps) {
   const handleToggle = () => {
     onTogglePermission(interface_item.id, interface_item.hasAccess);
   };
+
+  const isDefault = PERMISOS_PREDETERMINADOS.includes(interface_item.id);
 
   return (
     <Card
@@ -55,6 +63,7 @@ export function InterfaceCard({
           <Switch
             checked={interface_item.hasAccess}
             onCheckedChange={handleToggle}
+            disabled={isDefault}
             style={
               {
                 '--switch-thumb': interface_item.hasAccess

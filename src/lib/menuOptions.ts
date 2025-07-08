@@ -1,20 +1,60 @@
+import {
+  File,
+  FileText,
+  Sheet,
+  CreditCard,
+  FileCheck,
+  ClipboardCheck,
+} from 'lucide-react';
+
 export const menuOptions = [
-  { id: 'option1', label: 'Option 1', color: '#F34602', icon: null },
-  { id: 'option2', label: 'Option 2', color: '#02082C', icon: null },
-  { id: 'option3', label: 'Option 3', color: '#F34602', icon: null },
+  {
+    id: 'new-expense',
+    label: 'Crear Solicitud',
+    icon: File,
+    color: '#F34602',
+  },
+  {
+    id: 'travel-request',
+    label: 'Solicitudes de Viaticos',
+    icon: FileText,
+    color: '#F34602',
+  },
+  {
+    id: 'accounting-authorization',
+    label: 'Dispersión de Viaticos',
+    icon: Sheet,
+    color: '#F34602',
+  },
+  {
+    id: 'accounting-clearance',
+    label: 'Autorización Contable',
+    icon: ClipboardCheck,
+    color: '#F34602',
+  },
+  {
+    id: 'collaborators-w-card',
+    label: 'Asignación de Tarjeta',
+    icon: CreditCard,
+    color: '#F34602',
+  },
+  {
+    id: 'verification',
+    label: 'Comprobaciones de Viaticos',
+    icon: FileCheck,
+    color: '#F34602',
+  },
 ];
 
-export const subMenuOptions: Record<string, { id: string; label: string }[]> = {
-  option1: [
-    { id: 'sub1', label: 'Sub Option 1' },
-    { id: 'sub2', label: 'Sub Option 2' },
-  ],
-  option2: [
-    { id: 'sub3', label: 'Sub Option 3' },
-    { id: 'sub4', label: 'Sub Option 4' },
-  ],
-  option3: [
-    { id: 'sub5', label: 'Sub Option 5' },
-    { id: 'sub6', label: 'Sub Option 6' },
+export const subMenuOptions = {
+  verification: [
+    {
+      id: 'expense-verification',
+      label: 'Comprobacion de Viaticos por Colaborador',
+    },
+    {
+      id: 'travel-verification',
+      label: 'Mis comprobaciones',
+    },
   ],
 };
