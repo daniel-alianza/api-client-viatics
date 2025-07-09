@@ -5,12 +5,49 @@ import { ExpenseSearch } from '@/features/authorization/components/expense-searc
 import { ExpenseProvider } from '@/features/authorization/context/expense-context';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Users, Shield } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Badge } from '@/components/ui/badge';
 
 export default function ExpenseDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Función para obtener el mensaje de filtrado según el rol
+  const getFilterMessage = () => {
+    if (!user) return null;
+
+    switch (user.roleId) {
+      case 1:
+        return {
+          icon: <Shield className='h-4 w-4' />,
+          text: 'Viendo todas las solicitudes (Administrador)',
+          color: 'bg-blue-100 text-blue-800',
+        };
+      case 2:
+      case 3:
+        return {
+          icon: <Users className='h-4 w-4' />,
+          text: `Viendo solo solicitudes de subordinados (${
+            user.roleId === 2 ? 'Gerente' : 'Líder'
+          })`,
+          color: 'bg-green-100 text-green-800',
+        };
+      case 4:
+        return {
+          icon: <Shield className='h-4 w-4' />,
+          text: 'Viendo solo tus solicitudes (Colaborador)',
+          color: 'bg-purple-100 text-purple-800',
+        };
+      default:
+        return null;
+    }
+  };
+
+  const filterMessage = getFilterMessage();
+
   return (
     <ExpenseProvider>
       <div className='flex min-h-screen flex-col bg-gradient-to-br from-gray-50 to-gray-100'>
@@ -32,7 +69,8 @@ export default function ExpenseDashboard() {
             </h1>
           </div>
         </header>
-        <main className='flex-1 p-6'>
+
+        <main className='flex-1 py-8'>
           <div className='container mx-auto'>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -43,6 +81,24 @@ export default function ExpenseDashboard() {
               <h2 className='mb-4 text-2xl font-bold text-white'>
                 Solicitudes de gastos de viaje
               </h2>
+
+              {/* Indicador de filtrado por rol */}
+              {filterMessage && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, delay: 0.2 }}
+                  className='mb-4'
+                >
+                  <Badge
+                    className={`${filterMessage.color} border-0 flex items-center gap-2 w-fit`}
+                  >
+                    {filterMessage.icon}
+                    {filterMessage.text}
+                  </Badge>
+                </motion.div>
+              )}
+
               <div className='grid gap-4 md:grid-cols-2'>
                 <ExpenseSearch onSearch={setSearchQuery} />
                 <ExpenseFilter onFilterChange={setStatusFilter} />

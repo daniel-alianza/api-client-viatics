@@ -20,6 +20,21 @@ export const getUserById = async (id: number) => {
   }
 };
 
+// Obtener los subordinados de un usuario específico
+export const getSubordinates = async (managerId: number) => {
+  try {
+    const response = await api.get(`/users/subordinates/${managerId}`);
+    return response.data;
+  } catch (error) {
+    // Si el endpoint no existe, obtener todos los usuarios y filtrar
+    console.warn(
+      'Endpoint de subordinados no disponible, filtrando localmente',
+    );
+    const allUsers = await getAllUsers();
+    return allUsers.filter((user: any) => user.managerId === managerId);
+  }
+};
+
 // Obtener todos los roles
 export const getRoles = async () => {
   try {

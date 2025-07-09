@@ -35,7 +35,7 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute
             allowedRoles={[1, 2, 3, 4]}
-            requiredPermission='request'
+            requiredPermission='new-expense'
           >
             <RequestPage />
           </ProtectedRoute>

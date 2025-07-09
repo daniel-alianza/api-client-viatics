@@ -17,6 +17,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, user } = useAuth();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
+  // Permisos predeterminados que siempre permiten acceso
+  const PERMISOS_PREDETERMINADOS = ['new-expense', 'verification'];
+
   // Si es el super admin, acceso total (antes de cualquier validación)
   if (user && user.email === 'admin@alianzaelectrica.com') {
     return <>{children}</>;
@@ -24,6 +27,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   useEffect(() => {
     if (requiredPermission && user) {
+      // Si el permiso es predeterminado, dejar pasar
+      if (PERMISOS_PREDETERMINADOS.includes(requiredPermission)) {
+        setHasPermission(true);
+        return;
+      }
       api
         .get(`/permissions/user/${user.id}`)
         .then(res => {

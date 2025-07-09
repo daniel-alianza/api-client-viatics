@@ -90,8 +90,10 @@ const moduleInterfaces: Omit<Interface, 'hasAccess'>[] = [
     icon: Eye,
   },
   {
-    id: 'request',
-    name: menuOptions.find(opt => opt.id === 'request')?.label || 'Solicitudes',
+    id: 'travel-request',
+    name:
+      menuOptions.find(opt => opt.id === 'travel-request')?.label ||
+      'Solicitudes',
     description: 'Gestión y creación de solicitudes',
     category: 'General',
     icon: FileText,
