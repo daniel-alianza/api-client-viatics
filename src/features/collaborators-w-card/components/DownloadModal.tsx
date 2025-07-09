@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,23 +21,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  companyClientGroupMap,
+  normalizeCompanyName,
+  companyNameMap,
+} from '@/helpers/companyMap';
 
 interface DownloadModalProps {
   isOpen: boolean;
   onClose: () => void;
   collaborators: Collaborator[];
+  selectedCompany: string;
+  companies: { id: string; name: string }[];
 }
-
-// Función para formatear la fecha en español
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
 
 // Función para obtener el tiempo transcurrido
 const getTimeAgo = (date: string) => {
@@ -55,11 +51,35 @@ export default function DownloadModal({
   isOpen,
   onClose,
   collaborators,
+  selectedCompany,
+  companies,
 }: DownloadModalProps) {
   const [clientNumber, setClientNumber] = useState('');
   const [groupNumber, setGroupNumber] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
   const [timeFilter, setTimeFilter] = useState('all'); // 'all', 'recent', 'today', 'week'
+
+  useEffect(() => {
+    if (selectedCompany && selectedCompany !== 'all') {
+      const companyObj = companies.find(
+        c => c.id.toString() === selectedCompany,
+      );
+      if (companyObj) {
+        const normalizedName = normalizeCompanyName(companyObj.name);
+        const exactName = companyNameMap[normalizedName];
+        if (exactName) {
+          const map = companyClientGroupMap[exactName];
+          if (map) {
+            setClientNumber(map.cliente);
+            setGroupNumber(map.grupo);
+          }
+        }
+      }
+    } else {
+      setClientNumber('');
+      setGroupNumber('');
+    }
+  }, [selectedCompany, companies]);
 
   const resetForm = () => {
     setClientNumber('');
@@ -126,10 +146,11 @@ export default function DownloadModal({
 
           const today = new Date();
           const futureDate = new Date();
-          futureDate.setMonth(futureDate.getMonth() + 6);
+          futureDate.setDate(today.getDate() + 7); // Aumentar 7 días desde la fecha actual
 
           return {
             id: collaborator.id,
+            userId: collaborator.id,
             cardNumber: activeCard?.cardNumber || '',
             assignedTo: collaborator.name
               .normalize('NFD')
@@ -139,8 +160,9 @@ export default function DownloadModal({
               .replace(/[\u0300-\u036f]/g, ''),
             description: 'Asignacion de tarjeta',
             limit: 0.01,
-            exitDate: activeCard?.assignedAt || today.toISOString(),
-            returnDate: futureDate.toISOString(),
+            exitDate: today.toISOString(), // Siempre usar la fecha actual como fecha de inicio
+            returnDate: futureDate.toISOString(), // Fecha fin será 7 días después
+            status: 'ACTIVE',
           };
         });
 
@@ -241,6 +263,7 @@ export default function DownloadModal({
               onChange={e => setClientNumber(e.target.value)}
               placeholder='Ingrese número de cliente'
               className='border-gray-300 focus:border-[#F34602] focus:ring-[#F34602]'
+              readOnly={selectedCompany !== 'all' && !!clientNumber}
             />
           </div>
           <div className='space-y-2'>
@@ -251,6 +274,7 @@ export default function DownloadModal({
               onChange={e => setGroupNumber(e.target.value)}
               placeholder='Ingrese número de grupo'
               className='border-gray-300 focus:border-[#F34602] focus:ring-[#F34602]'
+              readOnly={selectedCompany !== 'all' && !!groupNumber}
             />
           </div>
         </div>

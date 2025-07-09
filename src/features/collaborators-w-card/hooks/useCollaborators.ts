@@ -99,13 +99,18 @@ export function useCollaborators() {
     }
   };
 
-  const assignCard = async (id: string, cardNumber: string) => {
+  const assignCard = async (
+    id: string,
+    cardNumber: string,
+    companyId?: string,
+  ) => {
     try {
       setLoading(true);
       setError(null);
       const updatedCollaborator = await collaboratorService.assignCard(
         id,
         cardNumber,
+        companyId,
       );
       // Si el colaborador ahora tiene tarjeta, lo eliminamos de la lista
       if (updatedCollaborator.hasCard) {

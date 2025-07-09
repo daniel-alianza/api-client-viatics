@@ -22,6 +22,7 @@ export default function HexagonButton({
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, duration: 0.5 }}
+      as='div'
     >
       <motion.button
         className='relative w-[200px] h-[230px] flex flex-col items-center justify-center bg-white rounded-2xl overflow-hidden transition-all duration-300'
@@ -39,6 +40,7 @@ export default function HexagonButton({
         whileHover={{ y: -10 }}
         whileTap={{ scale: 0.95 }}
         transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        as='button'
       >
         <motion.div
           className='absolute inset-0 opacity-0 transition-opacity duration-300'
@@ -49,6 +51,7 @@ export default function HexagonButton({
           initial={{ opacity: 0 }}
           animate={{ opacity: activeMenu === option.id ? 1 : 0 }}
           transition={{ duration: 0.3 }}
+          as='div'
         />
         <motion.div
           className='w-20 h-20 rounded-full flex items-center justify-center mb-4 shadow-lg transition-all duration-300'

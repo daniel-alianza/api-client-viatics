@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import {
-  getInspirationQuotes,
-  InspirationQuote,
-} from '../../../services/phraseService';
+import { getInspirationQuotes } from '../../../services/phraseService';
+import type { InspirationQuote } from '@/interfaces/phraseInterfece';
 
 export const useDailyQuote = () => {
   const [randomQuote, setRandomQuote] = useState<InspirationQuote | null>(null);

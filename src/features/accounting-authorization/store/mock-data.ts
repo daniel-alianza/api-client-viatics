@@ -12,6 +12,8 @@ export const mockCardAssignments: CardAssignment[] = [
     amountToAdjust: 0,
     startDate: '2024-03-15',
     endDate: '2024-03-20',
+    status: 'APROBADA',
+    companyId: 1,
   },
   {
     id: 1002,
@@ -24,6 +26,8 @@ export const mockCardAssignments: CardAssignment[] = [
     amountToAdjust: 0,
     startDate: '2024-03-18',
     endDate: '2024-03-19',
+    status: 'APROBADA',
+    companyId: 2,
   },
   {
     id: 1003,
@@ -36,6 +40,8 @@ export const mockCardAssignments: CardAssignment[] = [
     amountToAdjust: 0,
     startDate: '2024-03-20',
     endDate: '2024-03-25',
+    status: 'DISPERSADA',
+    companyId: 1,
   },
 ];
 
@@ -51,6 +57,8 @@ export const mockApprovedExpenses: CardAssignment[] = [
     amountToAdjust: 0,
     startDate: '2024-03-15',
     endDate: '2024-03-20',
+    status: 'APROBADA',
+    companyId: 1,
   },
   {
     id: 1002,
@@ -63,6 +71,8 @@ export const mockApprovedExpenses: CardAssignment[] = [
     amountToAdjust: 0,
     startDate: '2024-03-18',
     endDate: '2024-03-19',
+    status: 'APROBADA',
+    companyId: 2,
   },
   {
     id: 1003,
@@ -75,5 +85,7 @@ export const mockApprovedExpenses: CardAssignment[] = [
     amountToAdjust: 0,
     startDate: '2024-03-20',
     endDate: '2024-03-25',
+    status: 'DISPERSADA',
+    companyId: 1,
   },
 ];

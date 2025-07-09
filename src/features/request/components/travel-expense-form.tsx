@@ -6,28 +6,19 @@ import TripReason from './TripReason';
 import TravelDates from './TravelDates';
 import EstimatedExpenses from './EstimatedExpenses';
 import TripObjectives from './TripObjectives';
-import { motion } from 'framer-motion';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
 import { Send } from 'lucide-react';
-import {
-  SolicitudProvider,
-  useSolicitudContext,
-} from '../context/SolicitudContext';
+import { useAuth } from '@/context/AuthContext';
 import { useRequestErrorModal } from '@/features/request/hooks/useRequestErrorModal';
 import { RequestErrorModal } from '@/features/request/components/RequestErrorModal';
+import Navbar from './navbar';
+import { createTravelExpense } from '@/services/requestService';
+import type { TravelExpenseFormData } from '../interfaces/solicitud.types';
 
 const TravelExpenseFormContent = () => {
   const navigate = useNavigate();
-  const { userRequestData } = useSolicitudContext();
+  const { user } = useAuth();
   const {
     departureDate,
     setDepartureDate,
@@ -39,90 +30,34 @@ const TravelExpenseFormContent = () => {
     setTravelReason,
     travelObjectives,
     setTravelObjectives,
-    expenses,
     updateExpense,
     totalExpenses,
     getFormData,
+    setExpenses,
   } = useTravelExpenseForm();
 
-  const [userData, setUserData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    company: '',
-    branch: '',
-    area: '',
-    cardNumber: '',
-    travelReason: '',
-    departureDate: '',
-    returnDate: '',
-    expenses: {
-      transport: '0',
-      tolls: '0',
-      lodging: '0',
-      food: '0',
-      freight: '0',
-      tools: '0',
-      shipping: '0',
-      misc: '0',
-    },
-    disbursementDate: '',
-    totalAmount: '0',
-    travelObjectives: '',
-  });
-  const [completedSections, setCompletedSections] = useState({
-    basicInfo: false,
-    travelReason: false,
-    dates: false,
-    expenses: false,
-    disbursement: false,
-    objectives: false,
-  });
-  const [visibleSections, setVisibleSections] = useState({
-    basicInfo: true,
-    travelReason: false,
-    dates: false,
-    expenses: false,
-    disbursement: false,
-    objectives: false,
-  });
-  const [expandedSections, setExpandedSections] = useState({
-    basicInfo: true,
-    travelReason: false,
-    dates: false,
-    expenses: false,
-    disbursement: false,
-    objectives: false,
-  });
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<string>('');
 
-  const hasCardNumber =
-    userRequestData?.cardNumber && userRequestData.cardNumber !== 'N/A';
-
-  const {
-    modalState,
-    showErrorModal,
-    showWarningModal,
-    showSuccessModal,
-    closeModal,
-  } = useRequestErrorModal();
+  const hasCards = user?.cards && user.cards.length > 0;
 
   useEffect(() => {
-    const user = localStorage.getItem('user');
+    if (user?.cards && user.cards.length > 0 && !selectedCardId) {
+      setSelectedCardId(user.cards[0].id.toString());
+    }
+  }, [user?.cards, selectedCardId]);
+
+  useEffect(() => {
     if (!user) {
       navigate('/login', { replace: true });
-    } else {
-      try {
-        const parsedUser = JSON.parse(user);
-        setUserData(parsedUser);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        navigate('/login', { replace: true });
-      }
     }
-  }, [navigate]);
+  }, [navigate, user]);
+
+  const { modalState, showErrorModal, closeModal, showSuccessModal } =
+    useRequestErrorModal();
 
   const validateForm = () => {
-    if (!hasCardNumber) {
+    if (!hasCards) {
       showErrorModal(
         'Error de Validación',
         'No se encontró un número de tarjeta válido. Por favor, contacte al administrador.',
@@ -158,10 +93,10 @@ const TravelExpenseFormContent = () => {
       return false;
     }
 
-    if (distributionDate < departureDate) {
+    if (!distributionDate || isNaN(distributionDate.getTime())) {
       showErrorModal(
         'Error de Validación',
-        'La fecha de distribución debe ser posterior o igual a la fecha de salida',
+        'Por favor, ingrese una fecha de distribución válida',
       );
       return false;
     }
@@ -185,254 +120,135 @@ const TravelExpenseFormContent = () => {
     return true;
   };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  const transformFormData = (formData: TravelExpenseFormData) => {
+    const details = Object.entries(formData.expenses).map(
+      ([concept, amount]) => ({
+        concept,
+        amount,
+      }),
+    );
 
-  const handleExpenseChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      expenses: {
-        ...prev.expenses,
-        [name]: value,
-      },
-    }));
+    return {
+      userId: formData.userId,
+      totalAmount: formData.totalAmount,
+      departureDate: formData.departureDate
+        ? new Date(formData.departureDate).toISOString()
+        : undefined,
+      returnDate: formData.returnDate
+        ? new Date(formData.returnDate).toISOString()
+        : undefined,
+      disbursementDate: formData.distributionDate
+        ? new Date(formData.distributionDate).toISOString()
+        : undefined,
+      travelReason: formData.travelReason,
+      travelObjectives: formData.travelObjectives,
+      details,
+    };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-
     try {
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      const formDataValues = getFormData();
-      const requestData = {
-        userId: user.id,
-        totalAmount: totalExpenses,
-        travelReason: formDataValues.travelReason,
-        departureDate: formDataValues.departureDate,
-        returnDate: formDataValues.returnDate,
-        disbursementDate: formDataValues.distributionDate,
-        travelObjectives: formDataValues.travelObjectives,
-        details: Object.entries(formDataValues.expenses).map(
-          ([concept, amount]) => ({
-            concept,
-            amount: amount,
-          }),
-        ),
-      };
-
-      const response = await fetch('http://localhost:4000/expense-requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData),
+      const formData = getFormData();
+      const payload = transformFormData(formData);
+      await createTravelExpense(payload, user?.token ?? '');
+      setDepartureDate(undefined);
+      setReturnDate(undefined);
+      setDistributionDate(undefined);
+      setTravelReason('');
+      setTravelObjectives('');
+      setExpenses({
+        transportation: 0,
+        tolls: 0,
+        lodging: 0,
+        food: 0,
+        freight: 0,
+        tools: 0,
+        shipping: 0,
+        miscellaneous: 0,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al crear la solicitud');
-      }
-
-      const responseData = await response.json();
-      showSuccessModal(
-        'Solicitud Creada',
-        'La solicitud de viáticos ha sido creada exitosamente',
-      );
-      console.log('Solicitud creada:', responseData);
-
-      // Reinicia el formulario después de enviar
-      setFormData({
-        company: '',
-        branch: '',
-        area: '',
-        cardNumber: '',
-        travelReason: '',
-        departureDate: '',
-        returnDate: '',
-        expenses: {
-          transport: '0',
-          tolls: '0',
-          lodging: '0',
-          food: '0',
-          freight: '0',
-          tools: '0',
-          shipping: '0',
-          misc: '0',
-        },
-        disbursementDate: '',
-        totalAmount: '0',
-        travelObjectives: '',
-      });
-
-      setCompletedSections({
-        basicInfo: false,
-        travelReason: false,
-        dates: false,
-        expenses: false,
-        disbursement: false,
-        objectives: false,
-      });
-
-      setVisibleSections({
-        basicInfo: true,
-        travelReason: false,
-        dates: false,
-        expenses: false,
-        disbursement: false,
-        objectives: false,
-      });
-
-      setExpandedSections({
-        basicInfo: true,
-        travelReason: false,
-        dates: false,
-        expenses: false,
-        disbursement: false,
-        objectives: false,
-      });
-    } catch (error) {
-      console.error('Error:', error);
-      showErrorModal(
-        'Error al Crear Solicitud',
+      showSuccessModal('Éxito', 'La solicitud se ha enviado correctamente');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1200);
+    } catch (error: unknown) {
+      const errorMsg =
         error instanceof Error
           ? error.message
-          : 'Error al crear la solicitud de viáticos',
-      );
+          : 'Ocurrió un error al enviar la solicitud.';
+      showErrorModal('Error', errorMsg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const fadeIn = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
   return (
-    <div
-      className='min-h-screen p-4 md:p-8'
-      style={{
-        background: `linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%)`,
-      }}
-    >
-      <motion.div
-        initial='hidden'
-        animate='visible'
-        variants={fadeIn}
-        transition={{ duration: 0.5 }}
-      >
-        <div className='text-center mb-8'>
-          <motion.h1
-            className='text-3xl md:text-4xl font-bold mb-2'
-            style={{ color: '#02082C' }}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.7 }}
-          >
-            Solicitud de Viáticos
-          </motion.h1>
-          <motion.p
-            className='text-slate-600 max-w-2xl mx-auto'
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.7 }}
-          >
-            Completa todos los campos requeridos para tu viaje. Asegúrate de que
-            la información sea precisa y completa para evitar retrasos en el
-            proceso de aprobación.
-          </motion.p>
-        </div>
-
-        <Card className='w-full max-w-7xl mx-auto shadow-xl border-0 overflow-hidden bg-white/95 backdrop-blur-sm'>
-          <div
-            className='h-2 w-full'
-            style={{
-              background: `linear-gradient(5deg,rgb(14, 37, 188) 0%, #F34602 100%)`,
-            }}
-          ></div>
-          <CardHeader className='pb-4 pt-8 px-8'>
-            <CardTitle
-              className='text-2xl font-bold'
-              style={{ color: '#02082C' }}
-            >
-              Detalles de Gastos
-            </CardTitle>
-            <CardDescription className='text-slate-600'>
-              Proporcione toda la información requerida para su viaje.
-            </CardDescription>
-          </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className='space-y-8 px-8'>
-              <CompanyInfo />
-              <Separator className='bg-slate-200' />
-              <TripReason
-                travelReason={travelReason}
-                setTravelReason={setTravelReason}
-                disabled={!hasCardNumber}
+    <div className='min-h-screen bg-gray-50'>
+      <Navbar />
+      <div className='container mx-auto px-4 py-8'>
+        <div className='max-w-7xl mx-auto bg-white rounded-lg shadow-lg'>
+          <div className='p-8'>
+            <h1 className='text-2xl font-bold text-[#02082C] mb-8'>
+              Solicitud de Gastos de Viaje
+            </h1>
+            <form onSubmit={handleSubmit} className='space-y-8'>
+              <CompanyInfo
+                selectedCardId={selectedCardId}
+                setSelectedCardId={setSelectedCardId}
               />
-              <Separator className='bg-slate-200' />
-              <TravelDates
-                departureDate={departureDate}
-                setDepartureDate={setDepartureDate}
-                returnDate={returnDate}
-                setReturnDate={setReturnDate}
-                distributionDate={distributionDate}
-                setDistributionDate={setDistributionDate}
-                disabled={!hasCardNumber}
-              />
-              <Separator className='bg-slate-200' />
+              <Separator className='my-8' />
+              <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
+                <TripReason
+                  travelReason={travelReason}
+                  setTravelReason={setTravelReason}
+                  disabled={!hasCards}
+                />
+                <TravelDates
+                  departureDate={departureDate}
+                  setDepartureDate={setDepartureDate}
+                  returnDate={returnDate}
+                  setReturnDate={setReturnDate}
+                  distributionDate={distributionDate}
+                  setDistributionDate={setDistributionDate}
+                  disabled={!hasCards}
+                />
+              </div>
+              <Separator className='my-8' />
               <EstimatedExpenses
-                updateExpense={updateExpense}
                 totalExpenses={totalExpenses}
-                disabled={!hasCardNumber}
+                updateExpense={updateExpense}
+                disabled={!hasCards}
               />
-              <Separator className='bg-slate-200' />
+              <Separator className='my-8' />
               <TripObjectives
                 travelObjectives={travelObjectives}
                 setTravelObjectives={setTravelObjectives}
-                disabled={!hasCardNumber}
+                disabled={!hasCards}
               />
-            </CardContent>
-            <CardFooter className='px-8 py-6 bg-slate-50 border-t border-slate-200'>
-              <motion.div
-                className='w-full'
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
+              <div className='flex justify-end mt-12'>
                 <Button
                   type='submit'
-                  className='w-full py-6 text-lg font-medium transition-all duration-300 rounded-md'
-                  style={{
-                    background: `linear-gradient( #F34602 0%, #F34602 100%)`,
-                    boxShadow: '0 10px 15px -3px rgba(243, 70, 2, 0.2)',
-                  }}
-                  disabled={!hasCardNumber || isSubmitting}
+                  disabled={isSubmitting || !hasCards}
+                  className='flex items-center gap-2 bg-[#F34602] hover:bg-[#02082C] text-white'
                 >
-                  <Send className='mr-2 h-5 w-5' /> Solicitar Viáticos
+                  <Send className='w-4 h-4' />
+                  Enviar Solicitud
                 </Button>
-              </motion.div>
-            </CardFooter>
-          </form>
-        </Card>
-      </motion.div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
       <RequestErrorModal modalState={modalState} onClose={closeModal} />
     </div>
   );
 };
 
 const TravelExpenseForm = () => {
-  return (
-    <SolicitudProvider>
-      <TravelExpenseFormContent />
-    </SolicitudProvider>
-  );
+  return <TravelExpenseFormContent />;
 };
 
 export default TravelExpenseForm;

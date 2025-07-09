@@ -1,60 +1,21 @@
-import { useState } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, CreditCard, Loader2 } from 'lucide-react';
-import type { Collaborator } from '@/features/collaborators-w-card/interfaces/types';
-import { collaboratorService } from '@/services/collaboratorService';
-import { toast } from 'sonner';
-
-interface CollaboratorRowProps {
-  collaborator: Collaborator;
-  onEdit: () => void;
-  onRefresh: () => void;
-}
+import { CollaboratorRowProps } from '@/features/collaborators-w-card/interfaces/RowpropInterface';
+import { useCollaboratorCard } from '../hooks/useCollaboratorCard';
+import type { Company } from '@/interfaces/infoInterface';
 
 export default function CollaboratorRow({
   collaborator,
   onEdit,
   onRefresh,
-}: CollaboratorRowProps) {
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // Obtener la tarjeta activa más reciente
-  const activeCard = collaborator.cards
-    .filter(card => card.isActive)
-    .sort(
-      (a, b) =>
-        new Date(b.assignedAt).getTime() - new Date(a.assignedAt).getTime(),
-    )[0];
-
-  // Obtener el departamento o área del colaborador
-  const department = collaborator.area?.name || collaborator.department || '—';
-
-  const handleDeleteCard = async () => {
-    if (!activeCard) return;
-
-    try {
-      setIsDeleting(true);
-      await collaboratorService.removeCard(activeCard.id.toString());
-
-      toast.success('Tarjeta eliminada', {
-        description: 'La tarjeta ha sido eliminada exitosamente.',
-      });
-
-      // Refrescar la lista de colaboradores
-      onRefresh();
-    } catch (error) {
-      console.error('Error al eliminar la tarjeta:', error);
-      toast.error('Error', {
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Error al eliminar la tarjeta',
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  companies = [],
+}: CollaboratorRowProps & { companies?: Company[] }) {
+  const { activeCard, department, isDeleting, handleDeleteCard } =
+    useCollaboratorCard(collaborator, onRefresh);
+  const companyName =
+    companies.find(c => c.id.toString() === collaborator.companyId?.toString())
+      ?.name || 'Sin compañía';
 
   return (
     <TableRow className='hover:bg-orange-50 transition-colors duration-200'>
@@ -71,6 +32,7 @@ export default function CollaboratorRow({
           <span className='text-amber-600'>Sin tarjeta asignada</span>
         )}
       </TableCell>
+      <TableCell>{companyName}</TableCell>
       <TableCell className='text-right'>
         <div className='flex justify-end gap-2'>
           <Button
@@ -78,7 +40,7 @@ export default function CollaboratorRow({
             size='sm'
             onClick={onEdit}
             disabled={!activeCard}
-            className='text-[#0A1A4D] border-[#0A1A4D] hover:bg-[#0A1A4D] hover:text-white transition-all duration-300'
+            className='text-[#0A1A4D] border-[#0A1A4D] hover:bg-[#0A1A4D] hover:text-white transition-all duration-300 cursor-pointer'
           >
             <Edit className='h-4 w-4 mr-1' />
             Editar
@@ -89,7 +51,7 @@ export default function CollaboratorRow({
               size='sm'
               onClick={handleDeleteCard}
               disabled={isDeleting}
-              className='text-red-500 border-red-500 hover:bg-red-500 hover:text-white transition-all duration-300'
+              className='text-red-500 border-red-500 hover:bg-red-500 hover:text-white transition-all duration-300 cursor-pointer'
             >
               {isDeleting ? (
                 <Loader2 className='h-4 w-4 mr-1 animate-spin' />

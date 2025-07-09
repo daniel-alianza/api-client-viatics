@@ -14,12 +14,18 @@ export const useLogin = () => {
     setError(null);
 
     try {
-      const user = await loginUser({ email, password });
-      localStorage.setItem('user', JSON.stringify(user)); // Save user data in localStorage
+      const response = await loginUser({ email, password });
+      sessionStorage.setItem('user', JSON.stringify(response)); // Save user data in sessionStorage
       navigate('/dashboard');
-      return user; // Ensure user data is returned
+      return response; // Ensure user data is returned
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión');
+      let friendlyMessage =
+        'Error al iniciar sesión. Por favor, verifica tus credenciales o intenta más tarde.';
+      if (err?.response?.data?.message) {
+        // Si el backend manda un mensaje personalizado, lo usamos
+        friendlyMessage = err.response.data.message;
+      }
+      setError(friendlyMessage);
       console.error('Error during login:', err); // Debug log
       return undefined; // Explicitly return undefined on error
     }

@@ -3,20 +3,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import type { ReassignmentDialogData } from '../hooks/use-card-reassignment';
-
-interface ReassignmentDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: () => void;
-  data: ReassignmentDialogData;
-  onDataChange: (data: Partial<ReassignmentDialogData>) => void;
-  isProcessing: boolean;
-}
+import { ReassignmentDialogProps } from '../interfaces/DialogpropInterface';
+import { useCompanyAutoFill } from '../hooks/useCompanyAutoFill';
 
 export function ReassignmentDialog({
   isOpen,
@@ -25,12 +18,20 @@ export function ReassignmentDialog({
   data,
   onDataChange,
   isProcessing,
+  selectedCompany,
+  companies,
 }: ReassignmentDialogProps) {
+  useCompanyAutoFill({ selectedCompany, companies, onDataChange });
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Reasignación de Tarjeta</DialogTitle>
+          <DialogDescription>
+            Ingrese el número de grupo y cliente para generar el archivo de
+            reasignación.
+          </DialogDescription>
         </DialogHeader>
         <div className='grid gap-4 py-4'>
           <div className='grid gap-2'>
@@ -41,6 +42,7 @@ export function ReassignmentDialog({
               onChange={e => onDataChange({ groupNumber: e.target.value })}
               placeholder='Ingrese el número de grupo'
               maxLength={9}
+              readOnly={selectedCompany !== 'all' && !!data.groupNumber}
             />
           </div>
           <div className='grid gap-2'>
@@ -51,6 +53,7 @@ export function ReassignmentDialog({
               onChange={e => onDataChange({ clientNumber: e.target.value })}
               placeholder='Ingrese el número de cliente'
               maxLength={10}
+              readOnly={selectedCompany !== 'all' && !!data.clientNumber}
             />
           </div>
         </div>

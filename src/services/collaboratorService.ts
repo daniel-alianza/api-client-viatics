@@ -1,5 +1,6 @@
-import { apiFetch } from './api';
+import { api } from './api';
 import type { Collaborator } from '@/features/collaborators-w-card/interfaces/types';
+import { Card } from '@/interfaces/cardInterface';
 
 // Tipos de error personalizados
 class CardError extends Error {
@@ -16,174 +17,173 @@ class CardNotFoundException extends Error {
   }
 }
 
-interface Card {
-  id: number;
-  cardNumber: string;
-  isActive: boolean;
-  assignedAt: string;
-  userId: number;
-}
-
-/**
- * Servicio para gestionar colaboradores
- */
 export const collaboratorService = {
-  /**
-   * Obtiene todos los colaboradores
-   * @returns Lista de colaboradores
-   */
   getCollaborators: async (): Promise<Collaborator[]> => {
     try {
-      return await apiFetch<Collaborator[]>('/users');
+      const { data } = await api.get<Collaborator[]>('/users');
+      return data;
     } catch (error) {
       console.error('Error al obtener colaboradores:', error);
       throw error;
     }
   },
 
-  /**
-   * Obtiene colaboradores sin tarjeta asignada
-   * @returns Lista de colaboradores sin tarjeta
-   */
   getCollaboratorsWithoutCard: async (): Promise<Collaborator[]> => {
     try {
-      const collaborators = await apiFetch<Collaborator[]>('/users');
-      return collaborators.filter(collaborator => !collaborator.hasCard);
+      const { data } = await api.get<Collaborator[]>('/users');
+      return data.filter(collaborator => !collaborator.hasCard);
     } catch (error) {
       console.error('Error al obtener colaboradores sin tarjeta:', error);
       throw error;
     }
   },
 
-  /**
-   * Crea un nuevo colaborador
-   * @param collaborator - Datos del colaborador a crear
-   * @returns Colaborador creado
-   */
   createCollaborator: async (
     collaborator: Omit<Collaborator, 'id'>,
   ): Promise<Collaborator> => {
     try {
-      return await apiFetch<Collaborator>('/users', {
-        method: 'POST',
-        body: JSON.stringify(collaborator),
-      });
+      const { data } = await api.post<Collaborator>('/users', collaborator);
+      return data;
     } catch (error) {
       console.error('Error al crear colaborador:', error);
       throw error;
     }
   },
 
-  /**
-   * Actualiza un colaborador existente
-   * @param id - ID del colaborador
-   * @param collaborator - Datos actualizados del colaborador
-   * @returns Colaborador actualizado
-   */
   updateCollaborator: async (
     id: string,
     collaborator: Partial<Collaborator>,
   ): Promise<Collaborator> => {
     try {
-      return await apiFetch<Collaborator>(`/users/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(collaborator),
-      });
+      const { data } = await api.patch<Collaborator>(
+        `/users/${id}`,
+        collaborator,
+      );
+      return data;
     } catch (error) {
       console.error('Error al actualizar colaborador:', error);
       throw error;
     }
   },
 
-  /**
-   * Asigna una tarjeta a un colaborador
-   * @param id - ID del colaborador
-   * @param cardNumber - Número de tarjeta a asignar
-   * @throws {CardError} Si la tarjeta ya está registrada
-   * @returns Colaborador actualizado
-   */
-  assignCard: async (id: string, cardNumber: string): Promise<Collaborator> => {
+  assignCard: async (
+    id: string,
+    cardNumber: string,
+    companyId?: string,
+  ): Promise<Collaborator> => {
     try {
-      return await apiFetch<Collaborator>(`/users/${id}/cards`, {
-        method: 'POST',
-        body: JSON.stringify({ cardNumber }),
-      });
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes('ya está registrada')
-      ) {
-        throw new CardError('Esta tarjeta ya está registrada');
+      const payload: any = { cardNumber };
+      if (companyId) payload.companyId = Number(companyId);
+      const { data } = await api.post<Collaborator>(
+        `/users/${id}/cards`,
+        payload,
+      );
+      return data;
+    } catch (error: any) {
+      // Manejar errores específicos con mensajes amigables
+      if (error.response?.status === 409) {
+        throw new CardError('Esta tarjeta ya está registrada en el sistema');
       }
+      if (error.response?.status === 400) {
+        const message =
+          error.response?.data?.message ||
+          'Datos inválidos para asignar la tarjeta';
+        throw new CardError(message);
+      }
+      if (error.response?.status === 404) {
+        throw new CardError('El colaborador no fue encontrado');
+      }
+      if (error.response?.status === 422) {
+        throw new CardError('El número de tarjeta no es válido');
+      }
+
+      // Para otros errores, usar el mensaje del servidor si está disponible
+      const serverMessage = error.response?.data?.message;
+      if (serverMessage) {
+        throw new CardError(serverMessage);
+      }
+
+      // Mensaje genérico para errores no manejados
       console.error('Error al asignar tarjeta:', error);
-      throw error;
+      throw new CardError(
+        'Error al asignar la tarjeta. Por favor, inténtalo de nuevo.',
+      );
     }
   },
 
-  /**
-   * Elimina un colaborador
-   * @param id - ID del colaborador a eliminar
-   * @returns Resultado de la operación
-   */
   deleteCollaborator: async (id: string): Promise<void> => {
     try {
-      await apiFetch<void>(`/users/${id}`, {
-        method: 'DELETE',
-      });
+      await api.delete(`/users/${id}`);
     } catch (error) {
       console.error('Error al eliminar colaborador:', error);
       throw error;
     }
   },
 
-  /**
-   * Elimina una tarjeta específica
-   * @param cardId - ID de la tarjeta a eliminar
-   * @throws {CardNotFoundException} Si la tarjeta no existe
-   * @returns void
-   */
   removeCard: async (cardId: string): Promise<void> => {
     try {
-      await apiFetch<void>(`/users/cards/${cardId}`, {
-        method: 'DELETE',
-      });
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('no encontrada')) {
+      await api.delete(`/users/cards/${cardId}`);
+    } catch (error: any) {
+      // Manejar errores específicos con mensajes amigables
+      if (error.response?.status === 404) {
         throw new CardNotFoundException();
       }
+      if (error.response?.status === 400) {
+        const message =
+          error.response?.data?.message || 'No se puede eliminar la tarjeta';
+        throw new CardError(message);
+      }
+
+      // Para otros errores, usar el mensaje del servidor si está disponible
+      const serverMessage = error.response?.data?.message;
+      if (serverMessage) {
+        throw new CardError(serverMessage);
+      }
+
+      // Mensaje genérico para errores no manejados
       console.error('Error al eliminar tarjeta:', error);
-      throw error;
+      throw new CardError(
+        'Error al eliminar la tarjeta. Por favor, inténtalo de nuevo.',
+      );
     }
   },
 
-  /**
-   * Actualiza una tarjeta específica
-   * @param cardId - ID de la tarjeta a actualizar
-   * @param cardData - Datos de la tarjeta a actualizar
-   * @throws {CardError} Si el número de tarjeta ya está en uso
-   * @throws {CardNotFoundException} Si la tarjeta no existe
-   * @returns Tarjeta actualizada
-   */
   updateCard: async (
     cardId: string,
-    cardData: { cardNumber?: string; isActive?: boolean },
+    cardData: { cardNumber?: string; isActive?: boolean; companyId?: number },
   ): Promise<Card> => {
     try {
-      return await apiFetch<Card>(`/users/cards/${cardId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(cardData),
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message.includes('ya está en uso')) {
-          throw new CardError('Este número de tarjeta ya está en uso');
-        }
-        if (error.message.includes('no encontrada')) {
-          throw new CardNotFoundException();
-        }
+      const { data } = await api.patch<Card>(
+        `/users/cards/${cardId}`,
+        cardData,
+      );
+      return data;
+    } catch (error: any) {
+      // Manejar errores específicos con mensajes amigables
+      if (error.response?.status === 409) {
+        throw new CardError('Este número de tarjeta ya está en uso');
       }
+      if (error.response?.status === 404) {
+        throw new CardNotFoundException();
+      }
+      if (error.response?.status === 400) {
+        const message =
+          error.response?.data?.message ||
+          'Datos inválidos para actualizar la tarjeta';
+        throw new CardError(message);
+      }
+
+      // Para otros errores, usar el mensaje del servidor si está disponible
+      const serverMessage = error.response?.data?.message;
+      if (serverMessage) {
+        throw new CardError(serverMessage);
+      }
+
+      // Mensaje genérico para errores no manejados
       console.error('Error al actualizar tarjeta:', error);
-      throw error;
+      throw new CardError(
+        'Error al actualizar la tarjeta. Por favor, inténtalo de nuevo.',
+      );
     }
   },
 };

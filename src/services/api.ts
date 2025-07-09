@@ -1,40 +1,40 @@
-// Configuración de la API
-const BASE_URL = 'http://localhost:4000';
+import axios from 'axios';
+import { showErrorModal } from '../hooks/useErrorServer';
 
-/**
- * Función genérica para realizar peticiones a la API
- * @param endpoint - Endpoint de la API
- * @param options - Opciones de la petición
- * @returns Datos de la respuesta
- */
-export async function apiFetch<T>(
-  endpoint: string,
-  options?: RequestInit,
-): Promise<T> {
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    ...options,
-  });
+const API_URL = import.meta.env.VITE_API_URL;
 
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.message || 'Error en la solicitud');
-  }
-
-  return res.json();
+if (!API_URL) {
+  throw new Error('La variable de entorno VITE_API_URL no está definida');
 }
 
-/**
- * Endpoints de la API
- */
+export const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor para manejar errores de red
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (!error.response) {
+      // Error de red (por ejemplo: ECONNREFUSED)
+      console.error('[Axios] Error de conexión al servidor:', error);
+      showErrorModal();
+    } else {
+      console.error('[Axios] Error de respuesta:', error.response);
+    }
+
+    // Siempre rechazamos el error para que los llamados lo manejen
+    return Promise.reject(error);
+  },
+);
+
 export const API_ENDPOINTS = {
-  // Endpoints de solicitudes de gastos
   EXPENSE_REQUESTS: {
     BASE: '/expense-requests',
     APPROVE: (id: string) => `/expense-requests/${id}/approve`,
     REJECT: (id: string) => `/expense-requests/${id}/reject`,
   },
-  // Otros endpoints pueden ser agregados aquí
 };

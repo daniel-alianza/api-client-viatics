@@ -1,18 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-interface UserData {
-  token: string;
-  [key: string]: any; // Added missing semicolon
-}
+import { UserData } from '@/interfaces/requestInterface';
+import { api } from './api';
 
 let userData: UserData | null = null;
 
 export const setUserData = (data: UserData) => {
-  // console.log('Setting user data:', data); // Debug log
   userData = data;
 };
 
 export const getUserData = (): UserData | null => {
-  // console.log('Getting user data:', userData); // Debug log
   return userData;
 };
 
@@ -22,20 +18,32 @@ export const fetchUserSpecificData = async () => {
   }
 
   try {
-    const response = await fetch('/api/user-data', {
-      method: 'GET',
+    const response = await api.get('/user-data', {
       headers: {
         Authorization: `Bearer ${userData.token}`,
       },
     });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch user-specific data');
-    }
-
-    return await response.json();
-  } catch (error) {
+    return response.data;
+  } catch (error: any) {
     console.error('Error fetching user-specific data:', error);
-    throw error;
+    throw new Error(
+      error.response?.data?.message || 'Failed to fetch user-specific data',
+    );
+  }
+};
+
+export const createTravelExpense = async (data: any, token: string) => {
+  try {
+    const response = await api.post('/expense-requests', data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error creating travel expense:', error);
+    throw new Error(
+      error.response?.data?.message || 'Error al crear la solicitud',
+    );
   }
 };

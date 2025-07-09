@@ -1,29 +1,6 @@
 import type { Expense } from '@/features/authorization/interfaces/expense';
-import { apiFetch, API_ENDPOINTS } from './api';
-
-// Interfaz para la respuesta de la API
-interface ApiExpenseRequest {
-  id: number;
-  userId: number;
-  user?: {
-    name?: string;
-    company?: { name?: string };
-    branch?: { name?: string };
-    area?: { name?: string };
-  };
-  departureDate: string;
-  returnDate: string;
-  totalAmount: number | string;
-  status?: string;
-  travelReason?: string;
-  travelObjectives?: string;
-  details?: Array<{
-    id: number;
-    concept?: string;
-    amount: number | string;
-  }>;
-  createdAt?: string;
-}
+import { api, API_ENDPOINTS } from './api';
+import { ApiExpenseRequest } from '@/interfaces/expenseInterface';
 
 /**
  * Obtiene todas las solicitudes de gastos
@@ -31,34 +8,37 @@ interface ApiExpenseRequest {
  */
 export const getExpenseRequests = async (): Promise<Expense[]> => {
   try {
-    const response = await apiFetch<ApiExpenseRequest[]>(
+    const response = await api.get<ApiExpenseRequest[]>(
       API_ENDPOINTS.EXPENSE_REQUESTS.BASE,
     );
 
-    // Transformar los datos para que coincidan con la interfaz Expense
-    return response.map(request => ({
-      id: request.id.toString(),
-      userId: request.userId.toString(),
+    return response.data.map(request => ({
+      id: request.id ? request.id.toString() : '',
+      userId: request.userId ? request.userId.toString() : '',
       requestor: request.user?.name || 'N/A',
       userName: request.user?.name || 'N/A',
       company: request.user?.company?.name || 'N/A',
       branch: request.user?.branch?.name || 'N/A',
       area: request.user?.area?.name || 'N/A',
       departureDate: request.departureDate,
+      disbursementDate: request.disbursementDate,
       returnDate: request.returnDate,
-      totalAmount: parseFloat(request.totalAmount.toString()) || 0,
-      amount: parseFloat(request.totalAmount.toString()) || 0, // Para compatibilidad
+      totalAmount: request.totalAmount
+        ? parseFloat(request.totalAmount.toString()) || 0
+        : 0,
+      amount: request.totalAmount
+        ? parseFloat(request.totalAmount.toString()) || 0
+        : 0,
       status: request.status || 'Pending',
       reason: request.travelReason || 'N/A',
       objectives: request.travelObjectives || 'N/A',
       details:
         request.details?.map(detail => ({
-          id: detail.id.toString(),
+          id: detail.id ? detail.id.toString() : '',
           concept: detail.concept || 'N/A',
-          amount: parseFloat(detail.amount.toString()) || 0,
+          amount: detail.amount ? parseFloat(detail.amount.toString()) || 0 : 0,
         })) || [],
       createdAt: request.createdAt || new Date().toISOString(),
-      // Mantener la estructura de expenses para compatibilidad
       expenses: {
         Transport: 0,
         Tolls: 0,
@@ -78,15 +58,12 @@ export const getExpenseRequests = async (): Promise<Expense[]> => {
 
 /**
  * Aprueba o rechaza una solicitud de gastos
- * @param expenseId - ID de la solicitud de gastos
- * @param approved - Si es true, aprueba la solicitud; si es false, la rechaza
- * @param approverId - ID del aprobador
- * @returns Solicitud de gastos actualizada
  */
 export const updateExpenseStatus = async (
   expenseId: string,
   approved: boolean,
   approverId: string,
+  comment: string,
 ): Promise<Expense> => {
   try {
     const endpoint = approved
@@ -97,31 +74,36 @@ export const updateExpenseStatus = async (
           expenseId,
         )}?approverId=${approverId}`;
 
-    const response = await apiFetch<ApiExpenseRequest>(endpoint);
+    const response = await api.post<ApiExpenseRequest>(endpoint, { comment });
 
-    // Transformar la respuesta de la misma manera que en getExpenseRequests
+    const request = response.data;
+
     return {
-      id: response.id.toString(),
-      userId: response.userId.toString(),
-      requestor: response.user?.name || 'N/A',
-      userName: response.user?.name || 'N/A',
-      company: response.user?.company?.name || 'N/A',
-      branch: response.user?.branch?.name || 'N/A',
-      area: response.user?.area?.name || 'N/A',
-      departureDate: response.departureDate,
-      returnDate: response.returnDate,
-      totalAmount: parseFloat(response.totalAmount.toString()) || 0,
-      amount: parseFloat(response.totalAmount.toString()) || 0,
-      status: response.status || 'Pending',
-      reason: response.travelReason || 'N/A',
-      objectives: response.travelObjectives || 'N/A',
+      id: request.id ? request.id.toString() : '',
+      userId: request.userId ? request.userId.toString() : '',
+      requestor: request.user?.name || 'N/A',
+      userName: request.user?.name || 'N/A',
+      company: request.user?.company?.name || 'N/A',
+      branch: request.user?.branch?.name || 'N/A',
+      area: request.user?.area?.name || 'N/A',
+      departureDate: request.departureDate,
+      returnDate: request.returnDate,
+      totalAmount: request.totalAmount
+        ? parseFloat(request.totalAmount.toString()) || 0
+        : 0,
+      amount: request.totalAmount
+        ? parseFloat(request.totalAmount.toString()) || 0
+        : 0,
+      status: request.status || 'Pending',
+      reason: request.travelReason || 'N/A',
+      objectives: request.travelObjectives || 'N/A',
       details:
-        response.details?.map(detail => ({
-          id: detail.id.toString(),
+        request.details?.map(detail => ({
+          id: detail.id ? detail.id.toString() : '',
           concept: detail.concept || 'N/A',
-          amount: parseFloat(detail.amount.toString()) || 0,
+          amount: detail.amount ? parseFloat(detail.amount.toString()) || 0 : 0,
         })) || [],
-      createdAt: response.createdAt || new Date().toISOString(),
+      createdAt: request.createdAt || new Date().toISOString(),
       expenses: {
         Transport: 0,
         Tolls: 0,

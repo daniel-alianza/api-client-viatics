@@ -30,7 +30,7 @@ export default function DeleteConfirmation({
     try {
       setIsDeleting(true);
       setError(null);
-      await removeCollaborator(collaborator.id);
+      await removeCollaborator(collaborator.id.toString());
       onClose();
     } catch (err) {
       setError(

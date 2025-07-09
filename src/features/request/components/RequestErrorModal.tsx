@@ -9,13 +9,15 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+interface ModalState {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  type?: 'error' | 'warning' | 'success';
+}
+
 interface RequestErrorModalProps {
-  modalState: {
-    showModal: boolean;
-    title: string;
-    message: string;
-    type: 'error' | 'warning' | 'success';
-  };
+  modalState: ModalState;
   onClose: () => void;
 }
 
@@ -32,7 +34,7 @@ export const RequestErrorModal = ({
       case 'success':
         return <CheckCircle className='h-6 w-6 text-green-500' />;
       default:
-        return null;
+        return <XCircle className='h-6 w-6 text-red-500' />;
     }
   };
 
@@ -45,7 +47,7 @@ export const RequestErrorModal = ({
       case 'success':
         return 'text-green-500';
       default:
-        return '';
+        return 'text-red-500';
     }
   };
 
@@ -58,12 +60,12 @@ export const RequestErrorModal = ({
       case 'success':
         return 'bg-green-500 hover:bg-green-600';
       default:
-        return '';
+        return 'bg-red-500 hover:bg-red-600';
     }
   };
 
   return (
-    <AlertDialog open={modalState.showModal} onOpenChange={onClose}>
+    <AlertDialog open={modalState.isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <div className='flex items-center gap-2'>

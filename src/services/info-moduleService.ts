@@ -1,38 +1,27 @@
-import { apiFetch } from './api';
+import { Area, Branch, Company, User } from '@/interfaces/infoInterface';
+import { api } from './api';
 
-export interface Area {
-  id: string;
-  name: string;
-  branchId: string;
-}
+export const getAllUsers = async () => {
+  const res = await api.get<User[]>('/users');
+  return res.data;
+};
 
-export interface Branch {
-  id: string;
-  name: string;
-  companyId: string;
-  companyName: string;
-}
+export const getCompanies = async () => {
+  const res = await api.get<Company[]>('/companies');
+  return res.data;
+};
 
-export interface Company {
-  id: string;
-  name: string;
-}
+export const getBranchesByCompany = async (companyId: string) => {
+  const res = await api.get<Branch[]>(`/branch/${companyId}`);
+  return res.data;
+};
 
-export interface User {
-  id: number;
-  name: string;
-  companyId: number;
-  branchId: number;
-  areaId: number;
-  roleId: number;
-}
+export const getAreasByBranch = async (branchId: string) => {
+  const res = await api.get<Area[]>(`/area/${branchId}`);
+  return res.data;
+};
 
-export const getAllUsers = () => apiFetch<User[]>('/users');
-
-export const getCompanies = () => apiFetch<Company[]>('/companies');
-
-export const getBranchesByCompany = (companyId: string) =>
-  apiFetch<Branch[]>(`/branch/${companyId}`);
-
-export const getAreasByBranch = (branchId: string) =>
-  apiFetch<Area[]>(`/area/${branchId}`);
+export const getRoles = async () => {
+  const res = await api.get<{ id: string; name: string }[]>(`/roles`);
+  return res.data;
+};

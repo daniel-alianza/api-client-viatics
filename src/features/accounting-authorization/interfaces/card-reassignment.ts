@@ -5,6 +5,7 @@ export interface CardReassignment {
   amount: number; // Monto (11 caracteres maximo)
   startDate: string; // Fecha de inicio (aaaammdd)
   endDate?: string; // Fecha de fin (aaaammdd), opcional
+  statusChange?: '0' | '1' | '2' | '3'; // 0=Sin cambio, 1=Activo, 2=Inactivo, 3=Cancelado
 }
 
 export interface ReassignmentControlRow {

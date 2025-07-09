@@ -27,6 +27,13 @@ import {
   AlertDialogFooter,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 interface ExpenseTableProps {
   searchQuery: string;
@@ -35,7 +42,7 @@ interface ExpenseTableProps {
 
 export function ExpenseTable({ searchQuery, statusFilter }: ExpenseTableProps) {
   const [selectedExpense, setSelectedExpense] = useState<string | null>(null);
-  const { expenses, approveExpense } = useExpenses();
+  const { expenses, approveExpense, refreshExpenses } = useExpenses();
   const [alertState, setAlertState] = useState<{
     show: boolean;
     title: string;
@@ -47,6 +54,12 @@ export function ExpenseTable({ searchQuery, statusFilter }: ExpenseTableProps) {
     message: '',
     type: 'success',
   });
+  const [commentDialog, setCommentDialog] = useState<{
+    open: boolean;
+    expenseId: string | null;
+    approved: boolean;
+  }>({ open: false, expenseId: null, approved: false });
+  const [comment, setComment] = useState('');
 
   const filteredExpenses = expenses.filter(expense => {
     // Filter by status
@@ -109,13 +122,39 @@ export function ExpenseTable({ searchQuery, statusFilter }: ExpenseTableProps) {
   };
 
   const handleAction = async (expenseId: string, approved: boolean) => {
-    const result = await approveExpense(expenseId, approved);
+    setCommentDialog({ open: true, expenseId, approved });
+    setComment('');
+  };
+
+  const handleCommentDialogClose = () => {
+    setCommentDialog({ open: false, expenseId: null, approved: false });
+    setComment('');
+  };
+
+  const handleCommentSubmit = async () => {
+    if (!commentDialog.expenseId) return;
+    const comentario = comment
+      ? comment
+      : commentDialog.approved
+      ? 'Aprobado'
+      : 'Rechazado';
+    const result = await approveExpense(
+      commentDialog.expenseId,
+      commentDialog.approved,
+      comentario,
+    );
     setAlertState({
       show: true,
       title: result.success ? 'Éxito' : 'Error',
       message: result.message,
-      type: result.success ? 'success' : 'error',
+      type: commentDialog.approved
+        ? result.success
+          ? 'success'
+          : 'error'
+        : 'error',
     });
+    await refreshExpenses();
+    handleCommentDialogClose();
   };
 
   // Función para renderizar los botones de acción según el estado
@@ -131,7 +170,7 @@ export function ExpenseTable({ searchQuery, statusFilter }: ExpenseTableProps) {
         className='text-[#02082C] hover:bg-[#F34602]/10 hover:text-[#F34602] transition-all duration-200 hover:scale-110'
       >
         <Eye className='h-4 w-4' />
-        <span className='sr-only'>View Details</span>
+        <span className='sr-only'>Ver detalles</span>
       </Button>
     );
 
@@ -147,7 +186,7 @@ export function ExpenseTable({ searchQuery, statusFilter }: ExpenseTableProps) {
             className='text-[#02082C] hover:bg-green-100 hover:text-green-600 transition-all duration-200 hover:scale-110'
           >
             <ThumbsUp className='h-4 w-4' />
-            <span className='sr-only'>Approve</span>
+            <span className='sr-only'>Aprobar</span>
           </Button>
           <Button
             variant='ghost'
@@ -156,7 +195,7 @@ export function ExpenseTable({ searchQuery, statusFilter }: ExpenseTableProps) {
             className='text-[#02082C] hover:bg-red-100 hover:text-red-600 transition-all duration-200 hover:scale-110'
           >
             <X className='h-4 w-4' />
-            <span className='sr-only'>Reject</span>
+            <span className='sr-only'>Rechazar</span>
           </Button>
         </div>
       );
@@ -173,31 +212,31 @@ export function ExpenseTable({ searchQuery, statusFilter }: ExpenseTableProps) {
           <TableHeader className='bg-[#02082C]/10'>
             <TableRow>
               <TableHead className='font-medium text-[#02082C]'>
-                User ID
+                ID Usuario
               </TableHead>
               <TableHead className='font-medium text-[#02082C]'>
-                Requestor
+                Solicitante
               </TableHead>
               <TableHead className='font-medium text-[#02082C]'>
-                User Name
+                Motivo del viaje
               </TableHead>
               <TableHead className='font-medium text-[#02082C]'>
-                Company
+                Compañía
               </TableHead>
               <TableHead className='font-medium text-[#02082C]'>
-                Departure
+                Salida
               </TableHead>
               <TableHead className='font-medium text-[#02082C]'>
-                Return
+                Regreso
               </TableHead>
               <TableHead className='font-medium text-[#02082C]'>
-                Amount
+                Monto
               </TableHead>
               <TableHead className='font-medium text-[#02082C]'>
-                Status
+                Estado
               </TableHead>
               <TableHead className='font-medium text-[#02082C]'>
-                Actions
+                Acciones
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -206,7 +245,7 @@ export function ExpenseTable({ searchQuery, statusFilter }: ExpenseTableProps) {
               {filteredExpenses.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className='h-24 text-center'>
-                    No expense requests found.
+                    No se encontraron solicitudes de gastos.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -223,7 +262,7 @@ export function ExpenseTable({ searchQuery, statusFilter }: ExpenseTableProps) {
                       {expense.userId}
                     </TableCell>
                     <TableCell>{expense.requestor}</TableCell>
-                    <TableCell>{expense.userName}</TableCell>
+                    <TableCell>{expense.reason}</TableCell>
                     <TableCell>{expense.company}</TableCell>
                     <TableCell>{formatDate(expense.departureDate)}</TableCell>
                     <TableCell>{formatDate(expense.returnDate)}</TableCell>
@@ -278,6 +317,36 @@ export function ExpenseTable({ searchQuery, statusFilter }: ExpenseTableProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={commentDialog.open} onOpenChange={handleCommentDialogClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Agregar comentario (opcional)</DialogTitle>
+          </DialogHeader>
+          <div className='flex flex-col gap-4'>
+            <Input
+              placeholder='Escribe tu comentario...'
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+            />
+            <p className='text-sm text-gray-500'>
+              Si no escribes un comentario, se usará uno predeterminado: "
+              {commentDialog.approved ? 'Aprobado' : 'Rechazado'}"
+            </p>
+            <div className='flex gap-2'>
+              <Button
+                onClick={handleCommentSubmit}
+                className='bg-blue-600 hover:bg-blue-700'
+              >
+                Enviar
+              </Button>
+              <Button variant='outline' onClick={handleCommentDialogClose}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -52,7 +52,13 @@ export const useRegisterUser = ({
       setConfirmPassword('');
       resetSelections();
     } catch (err: any) {
-      setError(err.message || 'Error al registrar');
+      let mensaje = 'Error al registrar';
+      if (err.response && err.response.data && err.response.data.message) {
+        mensaje = err.response.data.message;
+      } else if (err.message) {
+        mensaje = err.message;
+      }
+      setError(mensaje);
     }
   };
 
